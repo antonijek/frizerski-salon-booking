@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import appointmentService from "../services/appointmentService";
 
 // ============================================
@@ -13,7 +13,7 @@ const useAppointments = () => {
     /**
      * Dohvati sve termine
      */
-    const fetchAll = useCallback(async () => {
+    const fetchAll = async () => {
         setLoading(true);
         setError(null);
         try {
@@ -24,38 +24,35 @@ const useAppointments = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    };
 
     /**
      * Dohvati termine za odredjeni datum
      * @param {string} date - Datum YYYY-MM-DD
      */
-    const fetchByDate = useCallback(
-        async (date) => {
-            if (!date) {
-                fetchAll();
-                return;
-            }
+    const fetchByDate = async (date) => {
+        if (!date) {
+            fetchAll();
+            return;
+        }
 
-            setLoading(true);
-            setError(null);
-            try {
-                const data = await appointmentService.getByDate(date);
-                setAppointments(data);
-            } catch (err) {
-                setError(err.error || "Greška pri dohvatanju termina");
-            } finally {
-                setLoading(false);
-            }
-        },
-        [fetchAll],
-    );
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await appointmentService.getByDate(date);
+            setAppointments(data);
+        } catch (err) {
+            setError(err.error || "Greška pri dohvatanju termina");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     /**
      * Dohvati termine po broju telefona
      * @param {string} phone - Broj telefona
      */
-    const fetchByPhone = useCallback(async (phone) => {
+    const fetchByPhone = async (phone) => {
         if (!phone) {
             setAppointments([]);
             return;
@@ -71,14 +68,14 @@ const useAppointments = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    };
 
     /**
      * Kreiraj novi termin
      * @param {Object} appointmentData
      * @returns {Promise<Object>} { success, message }
      */
-    const create = useCallback(async (appointmentData) => {
+    const create = async (appointmentData) => {
         setError(null);
         try {
             const result = await appointmentService.create(appointmentData);
@@ -92,7 +89,7 @@ const useAppointments = () => {
             setError(errorMsg);
             return { success: false, message: errorMsg };
         }
-    }, []);
+    };
 
     /**
      * Izmeni termin
@@ -100,7 +97,7 @@ const useAppointments = () => {
      * @param {Object} appointmentData
      * @returns {Promise<Object>} { success, message }
      */
-    const update = useCallback(async (id, appointmentData) => {
+    const update = async (id, appointmentData) => {
         setError(null);
         try {
             await appointmentService.update(id, appointmentData);
@@ -118,14 +115,14 @@ const useAppointments = () => {
             setError(errorMsg);
             return { success: false, message: errorMsg };
         }
-    }, []);
+    };
 
     /**
      * Obrisi termin
      * @param {number} id
      * @returns {Promise<boolean>}
      */
-    const remove = useCallback(async (id) => {
+    const remove = async (id) => {
         setError(null);
         try {
             await appointmentService.delete(id);
@@ -135,12 +132,13 @@ const useAppointments = () => {
             setError(err.error || "Greška pri brisanju termina");
             return false;
         }
-    }, []);
+    };
 
     // Ucitaj termine na mount
     useEffect(() => {
         fetchAll();
-    }, [fetchAll]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return {
         appointments,
