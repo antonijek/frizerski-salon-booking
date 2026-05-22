@@ -7,6 +7,7 @@ const db = mysql.createConnection({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
+    charset: "utf8mb4",
 });
 
 db.connect((err) => {
@@ -48,7 +49,7 @@ db.connect((err) => {
                 description TEXT,
                 icon VARCHAR(10) DEFAULT '✂️',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
         `;
 
         db.query(createServicesTableSql, (err) => {

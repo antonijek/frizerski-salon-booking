@@ -32,14 +32,18 @@ CREATE TABLE IF NOT EXISTS services (
     name VARCHAR(100) NOT NULL,
     duration INT NOT NULL COMMENT 'Trajanje u minutama',
     price DECIMAL(10, 2) NOT NULL,
-    description TEXT
-);
+    description TEXT,
+    icon VARCHAR(10) DEFAULT '✂️',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Ubaci osnovne usluge
-INSERT INTO services (name, duration, price, description) VALUES
-('Šišanje', 30, 15.00, 'Šišanje makazama ili mašinicom'),
-('Farbanje', 90, 40.00, 'Farbanje cele kose'),
-('Pranje i feniranje', 45, 20.00, 'Pranje i feniranje kose'),
-('Šišanje i feniranje', 60, 30.00, 'Šišanje sa feniranjem'),
-('Brijački poslovi', 20, 10.00, 'Brijanje brade i glave'),
-('Tretman za kosu', 45, 25.00, 'Hranljivi tretman za kosu');
+INSERT INTO services (name, duration, price, description, icon) VALUES
+('Šišanje', 30, 15.00, 'Šišanje po želji', '✂️'),
+('Šišanje i feniranje', 45, 20.00, 'Šišanje sa feniranjem', '💇'),
+('Farbanje', 90, 35.00, 'Farbanje cele kose', '🎨'),
+('Balayage', 120, 50.00, 'Tehnika balayage', '✨'),
+('Pramenovi', 90, 40.00, 'Pramenovi na foliju', '🌟'),
+('Feniranje', 30, 12.00, 'Samo feniranje', '💨'),
+('Peglanje kose', 30, 10.00, 'Peglanje kose', '🔧'),
+('Šišanje brade', 20, 8.00, 'Sređivanje brade', '🧔');

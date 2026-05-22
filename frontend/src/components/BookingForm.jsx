@@ -5,6 +5,7 @@ import useAppointments from "../hooks/useAppointments";
 import { useAppContext } from "../context/AppContext";
 import { useAuth } from "../context/AuthContext";
 import serviceService from "../services/serviceService";
+import appointmentService from "../services/appointmentService";
 
 // ============================================
 // BookingForm - Forma za zakazivanje termina
@@ -125,8 +126,8 @@ const BookingForm = ({ onNavigate }) => {
     // Dohvati zauzete termine kada se izabere datum
     useEffect(() => {
         if (values.date) {
-            fetch(`/api/appointments/date/${values.date}`)
-                .then((res) => res.json())
+            appointmentService
+                .getByDate(values.date)
                 .then((data) => {
                     // Izracunaj sve slotove koji su blokirani (ukljucujuci i trajanje usluge)
                     const blockedSlots = new Set();

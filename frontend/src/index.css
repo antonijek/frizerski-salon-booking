@@ -3,6 +3,19 @@
 @tailwind utilities;
 
 /* ============================================
+   Font - Inter (podržava srpska slova)
+   ============================================ */
+@layer base {
+    html {
+        font-family:
+            "Inter",
+            system-ui,
+            -apple-system,
+            sans-serif;
+    }
+}
+
+/* ============================================
    Custom animacije
    ============================================ */
 

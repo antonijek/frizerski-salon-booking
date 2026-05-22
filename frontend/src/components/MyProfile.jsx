@@ -3,6 +3,8 @@ import useAppointments from "../hooks/useAppointments";
 import { useAppContext } from "../context/AppContext";
 import { useAuth } from "../context/AuthContext";
 import salonConfig from "../config/salonConfig";
+import serviceService from "../services/serviceService";
+import appointmentService from "../services/appointmentService";
 
 // ============================================
 // MyProfile - Moj profil sa terminima
@@ -35,8 +37,22 @@ const MyProfile = () => {
     });
     const [bookedTimes, setBookedTimes] = useState([]);
     const [saving, setSaving] = useState(false);
+    const [services, setServices] = useState([]);
 
-    const { services, workingHours } = salonConfig;
+    const { workingHours } = salonConfig;
+
+    // Ucitaj usluge iz baze
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const data = await serviceService.getAll();
+                setServices(data);
+            } catch (err) {
+                console.error("Greška pri učitavanju usluga:", err);
+            }
+        };
+        fetchServices();
+    }, []);
 
     // Generisi radne sate
     const generateTimeSlots = () => {
@@ -61,8 +77,8 @@ const MyProfile = () => {
     // Dohvati zauzete termine za izabrani datum (osim trenutnog)
     useEffect(() => {
         if (editForm.date && editingAppointment) {
-            fetch(`/api/appointments/date/${editForm.date}`)
-                .then((res) => res.json())
+            appointmentService
+                .getByDate(editForm.date)
                 .then((data) => {
                     const filtered = data
                         .filter((a) => a.id !== editingAppointment.id)
