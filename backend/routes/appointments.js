@@ -1,6 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../db");
+const {
+    sendSalonNotification,
+    sendCustomerConfirmation,
+} = require("../emailService");
 
 // Dohvati sve termine
 router.get("/", (req, res) => {
@@ -30,14 +34,37 @@ router.get("/date/:date", (req, res) => {
 // Dohvati termine po broju telefona
 router.get("/phone/:phone", (req, res) => {
     const { phone } = req.params;
-    const sql =
-        "SELECT * FROM appointments WHERE phone = ? ORDER BY date DESC, time DESC";
-    db.query(sql, [phone], (err, results) => {
+    // Ukloni sve ne-cifre iz broja za pretragu
+    const cleanPhone = phone.replace(/\D/g, "");
+    // Uzmi poslednjih 6+ cifara za SQL pretragu (da nadje i formate sa pozivnim)
+    const searchSuffix = cleanPhone.slice(-8);
+    const sql = "SELECT * FROM appointments ORDER BY date DESC, time DESC";
+    db.query(sql, (err, results) => {
         if (err) {
             console.error("Greška pri dohvatanju termina:", err);
             return res.status(500).json({ error: "Greška na serveru" });
         }
-        res.json(results);
+        // Filtriraj rezultate - poredimo samo cifre
+        // Npr. ako je u bazi +38267551384, a korisnik unese 067551384,
+        // treba da se poklopi jer oba imaju "67551384" na kraju
+        const filtered = results.filter((a) => {
+            const dbClean = a.phone.replace(/\D/g, "");
+            // Ukloni vodeće nule iz oba broja
+            const dbTrimmed = dbClean.replace(/^0+/, "");
+            const inputTrimmed = cleanPhone.replace(/^0+/, "");
+            // Proveri da li se duži broj završava sa kraćim
+            // (npr. 38267551384 se završava sa 67551384, a 067551384 bez nule je 67551384)
+            const longer =
+                dbTrimmed.length >= inputTrimmed.length
+                    ? dbTrimmed
+                    : inputTrimmed;
+            const shorter =
+                dbTrimmed.length >= inputTrimmed.length
+                    ? inputTrimmed
+                    : dbTrimmed;
+            return longer.endsWith(shorter);
+        });
+        res.json(filtered);
     });
 });
 
@@ -71,6 +98,11 @@ router.post("/", (req, res) => {
                     console.error("Greška pri kreiranju termina:", err);
                     return res.status(500).json({ error: "Greška na serveru" });
                 }
+                // Posalji mejlove
+                const appointment = { name, phone, email, date, time, service };
+                sendSalonNotification(appointment);
+                sendCustomerConfirmation(appointment);
+
                 res.status(201).json({
                     id: result.insertId,
                     message: "Termin uspešno kreiran",

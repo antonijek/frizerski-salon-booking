@@ -1,28 +1,24 @@
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 
 // ============================================
 // Modal komponenta
 // ============================================
 
 const Modal = ({ isOpen, onClose, title, children, size = "md" }) => {
-    const handleKeyDown = useCallback(
-        (e) => {
-            if (e.key === "Escape") onClose();
-        },
-        [onClose],
-    );
-
     useEffect(() => {
         if (isOpen) {
+            const handleKeyDown = (e) => {
+                if (e.key === "Escape") onClose();
+            };
             document.addEventListener("keydown", handleKeyDown);
             document.body.style.overflow = "hidden";
-        }
 
-        return () => {
-            document.removeEventListener("keydown", handleKeyDown);
-            document.body.style.overflow = "unset";
-        };
-    }, [isOpen, handleKeyDown]);
+            return () => {
+                document.removeEventListener("keydown", handleKeyDown);
+                document.body.style.overflow = "unset";
+            };
+        }
+    }, [isOpen, onClose]);
 
     if (!isOpen) return null;
 

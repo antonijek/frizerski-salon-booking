@@ -1,5 +1,6 @@
 import salonConfig from "../config/salonConfig";
 import SectionWrapper from "./common/SectionWrapper";
+import ServiceCard from "./common/ServiceCard";
 
 // ============================================
 // HomePage - Pocetna stranica
@@ -43,28 +44,7 @@ const HomePage = ({ onNavigate }) => {
                 >
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {services.map((service) => (
-                            <div
-                                key={service.id}
-                                className="bg-white border border-gray-100 rounded-xl p-6 hover:shadow-lg transition-shadow"
-                            >
-                                <div className="text-4xl mb-4">
-                                    {service.icon}
-                                </div>
-                                <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                                    {service.name}
-                                </h3>
-                                <p className="text-gray-600 text-sm mb-4">
-                                    {service.description}
-                                </p>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-2xl font-bold text-amber-600">
-                                        {service.price}€
-                                    </span>
-                                    <span className="text-sm text-gray-500">
-                                        ~{service.duration} min
-                                    </span>
-                                </div>
-                            </div>
+                            <ServiceCard key={service.id} service={service} />
                         ))}
                     </div>
                 </SectionWrapper>

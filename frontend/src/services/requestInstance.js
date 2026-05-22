@@ -4,7 +4,7 @@ import axios from "axios";
 // Axios instanca sa interceptorima
 // ============================================
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "/api";
 
 const requestInstance = axios.create({
     baseURL: API_BASE_URL,
@@ -19,9 +19,11 @@ const requestInstance = axios.create({
 // ============================================
 requestInstance.interceptors.request.use(
     (config) => {
-        // Ovde mozes dodati token ako bude trebalo:
-        // const token = localStorage.getItem('token');
-        // if (token) config.headers.Authorization = `Bearer ${token}`;
+        // Automatski dodaj JWT token u svaki zahtev
+        const token = localStorage.getItem("token");
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
 
         console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
         return config;

@@ -229,7 +229,7 @@ const BookingForm = ({ onNavigate }) => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                         Vreme *
                     </label>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {timeSlots.map((time) => {
                             const isBooked = bookedTimes.includes(time);
                             return (

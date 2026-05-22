@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import useAppointments from "../hooks/useAppointments";
 import { useAppContext } from "../context/AppContext";
+import { useAuth } from "../context/AuthContext";
 import salonConfig from "../config/salonConfig";
 
 // ============================================
@@ -9,10 +10,20 @@ import salonConfig from "../config/salonConfig";
 
 const MyProfile = () => {
     const { showNotification } = useAppContext();
+    const { user, isAuthenticated } = useAuth();
     const { appointments, loading, error, fetchByPhone, update, remove } =
         useAppointments();
     const [phone, setPhone] = useState("");
     const [searched, setSearched] = useState(false);
+
+    // Automatski ucitaj termine ako je korisnik ulogovan
+    useEffect(() => {
+        if (isAuthenticated && user?.phone) {
+            setPhone(user.phone);
+            setSearched(true);
+            fetchByPhone(user.phone);
+        }
+    }, [isAuthenticated, user?.phone]);
     const [editingAppointment, setEditingAppointment] = useState(null);
     const [editForm, setEditForm] = useState({
         name: "",
@@ -142,13 +153,32 @@ const MyProfile = () => {
     };
 
     const formatDate = (dateStr) => {
-        const date = new Date(dateStr + "T00:00:00");
-        return date.toLocaleDateString("sr-RS", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
+        try {
+            // Proveri da li je datum validan
+            if (!dateStr) return "Nepoznat datum";
+
+            // Parsiraj YYYY-MM-DD format
+            const parts = dateStr.split("-");
+            if (parts.length !== 3) return dateStr;
+
+            const date = new Date(
+                parseInt(parts[0]),
+                parseInt(parts[1]) - 1,
+                parseInt(parts[2]),
+            );
+
+            // Proveri da li je datum validan
+            if (isNaN(date.getTime())) return dateStr;
+
+            return date.toLocaleDateString("sr-RS", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            });
+        } catch {
+            return dateStr;
+        }
     };
 
     const isPastAppointment = (dateStr, timeStr) => {
@@ -175,17 +205,20 @@ const MyProfile = () => {
             </p>
 
             {/* Pretraga po broju telefona */}
-            <form onSubmit={handleSearch} className="flex gap-2 mb-6">
+            <form
+                onSubmit={handleSearch}
+                className="flex flex-col sm:flex-row gap-2 mb-6"
+            >
                 <input
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="npr. 0612345678"
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                    className="w-full sm:flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
                 />
                 <button
                     type="submit"
-                    className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition font-medium"
+                    className="w-full sm:w-auto px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition font-medium"
                 >
                     🔍 Pretraži
                 </button>
@@ -231,7 +264,7 @@ const MyProfile = () => {
                                         : "border-gray-200"
                                 }`}
                             >
-                                <div className="flex justify-between items-start">
+                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                                     <div className="space-y-2">
                                         <div className="flex items-center gap-2">
                                             <span className="text-2xl">📅</span>
@@ -286,12 +319,12 @@ const MyProfile = () => {
                                         )}
                                     </div>
                                     {!isPast && (
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-2 sm:self-start">
                                             <button
                                                 onClick={() =>
                                                     openEditModal(appointment)
                                                 }
-                                                className="px-3 py-1 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition text-sm"
+                                                className="flex-1 sm:flex-none px-4 py-2 sm:px-3 sm:py-1.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition text-sm"
                                             >
                                                 Izmeni
                                             </button>
@@ -299,7 +332,7 @@ const MyProfile = () => {
                                                 onClick={() =>
                                                     handleDelete(appointment.id)
                                                 }
-                                                className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm"
+                                                className="flex-1 sm:flex-none px-4 py-2 sm:px-3 sm:py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm"
                                             >
                                                 Otkaži
                                             </button>
@@ -392,7 +425,7 @@ const MyProfile = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Vreme *
                                 </label>
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                                     {timeSlots.map((time) => {
                                         const isBooked =
                                             bookedTimes.includes(time);

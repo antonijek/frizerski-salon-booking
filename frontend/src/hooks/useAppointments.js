@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import appointmentService from "../services/appointmentService";
 
 // ============================================
@@ -133,12 +133,6 @@ const useAppointments = () => {
             return false;
         }
     };
-
-    // Ucitaj termine na mount
-    useEffect(() => {
-        fetchAll();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     return {
         appointments,

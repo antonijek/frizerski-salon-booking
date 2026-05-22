@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState } from "react";
 
 // ============================================
 // AppContext - globalno stanje aplikacije
@@ -16,25 +16,22 @@ export const AppProvider = ({ children }) => {
      * @param {'success'|'error'|'info'|'warning'} type - Tip notifikacije
      * @param {number} duration - Trajanje u ms (default 3000)
      */
-    const showNotification = useCallback(
-        (message, type = "info", duration = 3000) => {
-            setNotification({ message, type });
+    const showNotification = (message, type = "info", duration = 3000) => {
+        setNotification({ message, type });
 
-            if (duration > 0) {
-                setTimeout(() => {
-                    setNotification(null);
-                }, duration);
-            }
-        },
-        [],
-    );
+        if (duration > 0) {
+            setTimeout(() => {
+                setNotification(null);
+            }, duration);
+        }
+    };
 
     /**
      * Sakrij notifikaciju
      */
-    const hideNotification = useCallback(() => {
+    const hideNotification = () => {
         setNotification(null);
-    }, []);
+    };
 
     const value = {
         notification,

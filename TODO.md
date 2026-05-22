@@ -1,9 +1,21 @@
-# TODO - "Moj profil" sa izmenom termina
+# TODO - Dodavanje autentifikacije i admin panela
 
-- [x]   1. salonConfig.js - "Termini" → "Moj profil" 👤
-- [x]   2. Backend - PUT /appointments/:id ruta za izmenu
-- [x]   3. appointmentService.js - dodata update funkcija
-- [x]   4. useAppointments.js - dodata update funkcija
-- [x]   5. AppointmentList.jsx → MyProfile.jsx (kompletna komponenta)
-- [x]   6. App.jsx - ažuriran import i ruta
-- [x]   7. BookingForm.jsx - dodata opcija "Pogledaj moj profil" posle zakazivanja
+## Backend
+
+- [x] Instalirati bcryptjs i jsonwebtoken
+- [x] Dodati tabelu `users` u bazu
+- [x] Napraviti `routes/auth.js` (register/login)
+- [x] Napraviti middleware za autentifikaciju (authMiddleware.js)
+- [x] Zaštititi admin rute
+- [x] Dodati JWT_SECRET u .env
+
+## Frontend
+
+- [x] Prepraviti requestInstance.js da šalje token
+- [x] Napraviti authService.js
+- [x] Napraviti Login komponentu
+- [x] Napraviti Register komponentu
+- [x] Dodati auth u AppContext
+- [x] Dodati AdminPanel komponentu
+- [x] Dodati navigaciju za login/register/admin
+- [x] Push na GitHub
