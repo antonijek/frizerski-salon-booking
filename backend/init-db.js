@@ -38,7 +38,69 @@ db.connect((err) => {
         }
         console.log("Tabela 'appointments' kreirana");
 
+        // Kreiraj tabelu services
+        const createServicesTableSql = `
+            CREATE TABLE IF NOT EXISTS services (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                duration INT NOT NULL,
+                price DECIMAL(10,2) NOT NULL,
+                description TEXT,
+                icon VARCHAR(10) DEFAULT '✂️',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `;
+
+        db.query(createServicesTableSql, (err) => {
+            if (err) {
+                console.error("Greška pri kreiranju tabele services:", err);
+                process.exit(1);
+            }
+            console.log("Tabela 'services' kreirana");
+
+            // Ubaci default usluge ako tabela prazna
+            const checkServicesSql = "SELECT COUNT(*) as count FROM services";
+            db.query(checkServicesSql, (err, results) => {
+                if (err) {
+                    console.error("Greška:", err);
+                    process.exit(1);
+                }
+
+                if (results[0].count === 0) {
+                    const insertServicesSql =
+                        "INSERT INTO services (name, duration, price, description, icon) VALUES ?";
+                    const defaultServices = [
+                        ["Šišanje", 30, 15.0, "Šišanje po želji", "✂️"],
+                        [
+                            "Šišanje i feniranje",
+                            45,
+                            20.0,
+                            "Šišanje sa feniranjem",
+                            "💇",
+                        ],
+                        ["Farbanje", 90, 35.0, "Farbanje cele kose", "🎨"],
+                        ["Balayage", 120, 50.0, "Tehnika balayage", "✨"],
+                        ["Pramenovi", 90, 40.0, "Pramenovi na foliju", "🌟"],
+                        ["Feniranje", 30, 12.0, "Samo feniranje", "💨"],
+                        ["Peglanje kose", 30, 10.0, "Peglanje kose", "🔧"],
+                        ["Šišanje brade", 20, 8.0, "Sređivanje brade", "🧔"],
+                    ];
+                    db.query(insertServicesSql, [defaultServices], (err) => {
+                        if (err) {
+                            console.error(
+                                "Greška pri dodavanju default usluga:",
+                                err,
+                            );
+                        } else {
+                            console.log("Default usluge dodate");
+                        }
+                    });
+                }
+            });
+        });
+
         // Kreiraj tabelu users
+
         const createTableSql = `
         CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,

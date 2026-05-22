@@ -1,13 +1,31 @@
+import { useState, useEffect } from "react";
 import salonConfig from "../config/salonConfig";
 import SectionWrapper from "./common/SectionWrapper";
 import ServiceCard from "./common/ServiceCard";
+import serviceService from "../services/serviceService";
 
 // ============================================
 // HomePage - Pocetna stranica
 // ============================================
 
 const HomePage = ({ onNavigate }) => {
-    const { name, tagline, description, services, contact } = salonConfig;
+    const { name, tagline, description, contact } = salonConfig;
+    const [services, setServices] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const data = await serviceService.getAll();
+                setServices(data);
+            } catch (err) {
+                console.error("Greška pri učitavanju usluga:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchServices();
+    }, []);
 
     return (
         <>

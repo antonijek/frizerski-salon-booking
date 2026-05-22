@@ -147,6 +147,8 @@ const MyProfile = () => {
         if (result.success) {
             showNotification("✅ Termin uspešno izmenjen!", "success");
             closeEditModal();
+            // Osveži termine nakon izmene
+            fetchByPhone(phone);
         } else {
             showNotification(result.message, "error");
         }
@@ -182,7 +184,16 @@ const MyProfile = () => {
     };
 
     const isPastAppointment = (dateStr, timeStr) => {
-        const appointmentDate = new Date(`${dateStr}T${timeStr}`);
+        // Parsiraj YYYY-MM-DD bez vremenske zone
+        const parts = dateStr.split("-");
+        if (parts.length !== 3) return false;
+        const appointmentDate = new Date(
+            parseInt(parts[0]),
+            parseInt(parts[1]) - 1,
+            parseInt(parts[2]),
+            parseInt(timeStr.split(":")[0]),
+            parseInt(timeStr.split(":")[1]),
+        );
         return appointmentDate < new Date();
     };
 

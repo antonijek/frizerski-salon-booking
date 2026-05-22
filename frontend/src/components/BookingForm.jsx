@@ -3,20 +3,63 @@ import salonConfig from "../config/salonConfig";
 import useForm from "../hooks/useForm";
 import useAppointments from "../hooks/useAppointments";
 import { useAppContext } from "../context/AppContext";
+import { useAuth } from "../context/AuthContext";
+import serviceService from "../services/serviceService";
 
 // ============================================
 // BookingForm - Forma za zakazivanje termina
 // ============================================
 
+// Helper funkcije za konverziju vremena
+const timeToMinutes = (time) => {
+    const [h, m] = time.split(":").map(Number);
+    return h * 60 + m;
+};
+
+const minutesToTime = (minutes) => {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+};
+
 const BookingForm = ({ onNavigate }) => {
     const { showNotification } = useAppContext();
     const { create } = useAppointments();
+    const { user, isAuthenticated } = useAuth();
     const [bookedTimes, setBookedTimes] = useState([]);
     const [loading, setLoading] = useState(false);
     const [showProfilePrompt, setShowProfilePrompt] = useState(false);
-    const [lastPhone, setLastPhone] = useState("");
+    const [services, setServices] = useState([]);
 
-    const { services, workingHours, booking } = salonConfig;
+    const { workingHours, booking } = salonConfig;
+
+    // Ucitaj usluge iz baze
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const data = await serviceService.getAll();
+                setServices(data);
+            } catch (err) {
+                console.error("Greška pri učitavanju usluga:", err);
+            }
+        };
+        fetchServices();
+    }, []);
+
+    // Popuni formu podacima ulogovanog korisnika
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            // Simuliramo handleChange za svako polje
+            const fields = [
+                { name: "name", value: user.name || "" },
+                { name: "phone", value: user.phone || "" },
+                { name: "email", value: user.email || "" },
+            ];
+            fields.forEach((field) => {
+                handleChange({ target: field });
+            });
+        }
+    }, [isAuthenticated, user]);
 
     // Generisi radne sate na osnovu config-a
     const generateTimeSlots = () => {
@@ -85,7 +128,24 @@ const BookingForm = ({ onNavigate }) => {
             fetch(`/api/appointments/date/${values.date}`)
                 .then((res) => res.json())
                 .then((data) => {
-                    setBookedTimes(data.map((a) => a.time.slice(0, 5)));
+                    // Izracunaj sve slotove koji su blokirani (ukljucujuci i trajanje usluge)
+                    const blockedSlots = new Set();
+                    data.forEach((a) => {
+                        const startTime = a.time.slice(0, 5);
+                        // Koristi trajanje iz baze (vraceno kroz JOIN sa services tabelom)
+                        const duration = a.duration || workingHours.interval;
+                        // Dodaj sve slotove koje ova usluga blokira
+                        const startMinutes = timeToMinutes(startTime);
+                        const endMinutes = startMinutes + duration;
+                        for (
+                            let m = startMinutes;
+                            m < endMinutes;
+                            m += workingHours.interval
+                        ) {
+                            blockedSlots.add(minutesToTime(m));
+                        }
+                    });
+                    setBookedTimes([...blockedSlots]);
                 })
                 .catch(() => setBookedTimes([]));
         }
@@ -103,7 +163,6 @@ const BookingForm = ({ onNavigate }) => {
 
             if (result.success) {
                 showNotification("🎉 Termin uspešno zakazan!", "success");
-                setLastPhone(values.phone);
                 setShowProfilePrompt(true);
                 reset();
                 setBookedTimes([]);

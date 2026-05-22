@@ -63,58 +63,6 @@ const salonConfig = {
         info: "blue",
     },
 
-    // Usluge
-    services: [
-        {
-            id: 1,
-            name: "Šišanje",
-            duration: 30,
-            price: 15.0,
-            description: "Šišanje makazama ili mašinicom",
-            icon: "✂️",
-        },
-        {
-            id: 2,
-            name: "Farbanje",
-            duration: 90,
-            price: 40.0,
-            description: "Farbanje cele kose",
-            icon: "🎨",
-        },
-        {
-            id: 3,
-            name: "Pranje i feniranje",
-            duration: 45,
-            price: 20.0,
-            description: "Pranje i feniranje kose",
-            icon: "💆",
-        },
-        {
-            id: 4,
-            name: "Šišanje i feniranje",
-            duration: 60,
-            price: 30.0,
-            description: "Šišanje sa feniranjem",
-            icon: "💇",
-        },
-        {
-            id: 5,
-            name: "Brijački poslovi",
-            duration: 20,
-            price: 10.0,
-            description: "Brijanje brade i glave",
-            icon: "🪒",
-        },
-        {
-            id: 6,
-            name: "Tretman za kosu",
-            duration: 45,
-            price: 25.0,
-            description: "Hranljivi tretman za kosu",
-            icon: "✨",
-        },
-    ],
-
     // Navigacija
     navigation: [
         { label: "Početna", path: "/", icon: "🏠" },

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import salonConfig from "../../config/salonConfig";
-import authService from "../../services/authService";
 
 // ============================================
 // PageWrapper - wrapper za celu stranicu
@@ -9,23 +8,8 @@ import authService from "../../services/authService";
 
 const PageWrapper = ({ children, currentView, onNavigate }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [makingAdmin, setMakingAdmin] = useState(false);
     const { name, tagline, navigation, footer } = salonConfig;
-    const { user, isAuthenticated, isAdmin, logout } = useAuth();
-
-    const handleMakeAdmin = async () => {
-        if (!user?.email) return;
-        setMakingAdmin(true);
-        try {
-            await authService.makeAdmin(user.email);
-            alert(
-                "✅ Postali ste admin! Odjavite se i ponovo prijavite da bi promene stupile na snagu.",
-            );
-        } catch (err) {
-            alert("❌ " + (err.error || "Greška pri dodeli admin prava"));
-        }
-        setMakingAdmin(false);
-    };
+    const { isAuthenticated, isAdmin, logout } = useAuth();
 
     const handleNavClick = (path) => {
         setMobileMenuOpen(false);
@@ -88,17 +72,6 @@ const PageWrapper = ({ children, currentView, onNavigate }) => {
                                             }`}
                                         >
                                             🔧 Admin
-                                        </button>
-                                    )}
-                                    {!isAdmin && (
-                                        <button
-                                            onClick={handleMakeAdmin}
-                                            disabled={makingAdmin}
-                                            className="px-4 py-2 rounded-lg transition text-sm font-medium text-gray-700 hover:bg-gray-100"
-                                        >
-                                            {makingAdmin
-                                                ? "..."
-                                                : "👑 Postani admin"}
                                         </button>
                                     )}
                                     <button

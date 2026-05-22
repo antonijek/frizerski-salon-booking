@@ -36,7 +36,14 @@ const AppointmentList = () => {
     };
 
     const formatDate = (dateStr) => {
-        const date = new Date(dateStr + "T00:00:00");
+        // Parsiraj YYYY-MM-DD bez vremenske zone
+        const parts = dateStr.split("-");
+        if (parts.length !== 3) return dateStr;
+        const date = new Date(
+            parseInt(parts[0]),
+            parseInt(parts[1]) - 1,
+            parseInt(parts[2]),
+        );
         return date.toLocaleDateString("sr-RS", {
             weekday: "long",
             year: "numeric",

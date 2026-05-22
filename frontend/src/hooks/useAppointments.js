@@ -101,6 +101,7 @@ const useAppointments = () => {
         setError(null);
         try {
             await appointmentService.update(id, appointmentData);
+            // Azuriraj lokalno stanje
             setAppointments((prev) =>
                 prev.map((a) =>
                     a.id === id ? { ...a, ...appointmentData } : a,

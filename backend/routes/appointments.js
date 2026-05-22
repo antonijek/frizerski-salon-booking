@@ -4,11 +4,13 @@ const db = require("../db");
 const {
     sendSalonNotification,
     sendCustomerConfirmation,
+    sendCancellationNotification,
 } = require("../emailService");
 
-// Dohvati sve termine
+// Dohvati sve termine (sa cenom usluge)
 router.get("/", (req, res) => {
-    const sql = "SELECT * FROM appointments ORDER BY date, time";
+    const sql =
+        "SELECT a.id, a.name, a.phone, a.email, DATE_FORMAT(a.date, '%Y-%m-%d') as date, a.time, a.service, s.price, a.created_at FROM appointments a LEFT JOIN services s ON a.service = s.name ORDER BY a.date, a.time";
     db.query(sql, (err, results) => {
         if (err) {
             console.error("Greška pri dohvatanju termina:", err);
@@ -18,10 +20,11 @@ router.get("/", (req, res) => {
     });
 });
 
-// Dohvati termine za odredjeni datum
+// Dohvati termine za odredjeni datum (sa trajanjem usluge)
 router.get("/date/:date", (req, res) => {
     const { date } = req.params;
-    const sql = "SELECT * FROM appointments WHERE date = ? ORDER BY time";
+    const sql =
+        "SELECT a.id, a.name, a.phone, a.email, DATE_FORMAT(a.date, '%Y-%m-%d') as date, a.time, a.service, s.duration FROM appointments a LEFT JOIN services s ON a.service = s.name WHERE a.date = ? ORDER BY a.time";
     db.query(sql, [date], (err, results) => {
         if (err) {
             console.error("Greška pri dohvatanju termina:", err);
@@ -38,7 +41,8 @@ router.get("/phone/:phone", (req, res) => {
     const cleanPhone = phone.replace(/\D/g, "");
     // Uzmi poslednjih 6+ cifara za SQL pretragu (da nadje i formate sa pozivnim)
     const searchSuffix = cleanPhone.slice(-8);
-    const sql = "SELECT * FROM appointments ORDER BY date DESC, time DESC";
+    const sql =
+        "SELECT id, name, phone, email, DATE_FORMAT(date, '%Y-%m-%d') as date, time, service, created_at FROM appointments ORDER BY date DESC, time DESC";
     db.query(sql, (err, results) => {
         if (err) {
             console.error("Greška pri dohvatanju termina:", err);
@@ -155,19 +159,37 @@ router.put("/:id", (req, res) => {
     });
 });
 
-// Obrisi termin
+// Obrisi termin (sa slanjem mejla o otkazivanju)
 router.delete("/:id", (req, res) => {
     const { id } = req.params;
-    const sql = "DELETE FROM appointments WHERE id = ?";
-    db.query(sql, [id], (err, result) => {
+
+    // Prvo dohvati podatke o terminu da bismo poslali mejl
+    const getSql =
+        "SELECT id, name, phone, email, DATE_FORMAT(date, '%Y-%m-%d') as date, time, service FROM appointments WHERE id = ?";
+    db.query(getSql, [id], (err, results) => {
         if (err) {
-            console.error("Greška pri brisanju termina:", err);
+            console.error("Greška pri dohvatanju termina:", err);
             return res.status(500).json({ error: "Greška na serveru" });
         }
-        if (result.affectedRows === 0) {
+        if (results.length === 0) {
             return res.status(404).json({ error: "Termin nije pronadjen" });
         }
-        res.json({ message: "Termin uspešno obrisan" });
+
+        const appointment = results[0];
+
+        // Obrisi termin
+        const deleteSql = "DELETE FROM appointments WHERE id = ?";
+        db.query(deleteSql, [id], (err, result) => {
+            if (err) {
+                console.error("Greška pri brisanju termina:", err);
+                return res.status(500).json({ error: "Greška na serveru" });
+            }
+
+            // Posalji mejlove o otkazivanju
+            sendCancellationNotification(appointment);
+
+            res.json({ message: "Termin uspešno obrisan" });
+        });
     });
 });
 
