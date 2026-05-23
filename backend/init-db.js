@@ -17,30 +17,73 @@ db.connect((err) => {
     }
     console.log("Povezan na MySQL bazu");
 
-    // Kreiraj tabelu appointments
-    const createAppointmentsTableSql = `
-        CREATE TABLE IF NOT EXISTS appointments (
+    // Kreiraj tabelu barbers
+    const createBarbersTableSql = `
+        CREATE TABLE IF NOT EXISTS barbers (
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(100) NOT NULL,
-            phone VARCHAR(20) NOT NULL,
-            email VARCHAR(100),
-            date DATE NOT NULL,
-            time TIME NOT NULL,
-            service VARCHAR(100) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE KEY unique_appointment (date, time)
-        )
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
     `;
 
-    db.query(createAppointmentsTableSql, (err) => {
+    db.query(createBarbersTableSql, (err) => {
         if (err) {
-            console.error("Greška pri kreiranju tabele appointments:", err);
+            console.error("Greška pri kreiranju tabele barbers:", err);
             process.exit(1);
         }
-        console.log("Tabela 'appointments' kreirana");
+        console.log("Tabela 'barbers' kreirana");
 
-        // Kreiraj tabelu services
-        const createServicesTableSql = `
+        // Ubaci default frizere ako tabela prazna
+        const checkBarbersSql = "SELECT COUNT(*) as count FROM barbers";
+        db.query(checkBarbersSql, (err, results) => {
+            if (err) {
+                console.error("Greška:", err);
+                process.exit(1);
+            }
+
+            if (results[0].count === 0) {
+                const insertBarbersSql = "INSERT INTO barbers (name) VALUES ?";
+                const defaultBarbers = [["Marko"], ["Jovana"], ["Ana"]];
+                db.query(insertBarbersSql, [defaultBarbers], (err) => {
+                    if (err) {
+                        console.error(
+                            "Greška pri dodavanju default frizera:",
+                            err,
+                        );
+                    } else {
+                        console.log("Default frizeri dodati");
+                    }
+                });
+            }
+        });
+
+        // Kreiraj tabelu appointments (sa barber_id)
+        const createAppointmentsTableSql = `
+            CREATE TABLE IF NOT EXISTS appointments (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                phone VARCHAR(20) NOT NULL,
+                email VARCHAR(100),
+                date DATE NOT NULL,
+                time TIME NOT NULL,
+                service VARCHAR(100) NOT NULL,
+                barber_id INT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_appointment (date, time, barber_id),
+                FOREIGN KEY (barber_id) REFERENCES barbers(id) ON DELETE SET NULL
+            )
+        `;
+
+        db.query(createAppointmentsTableSql, (err) => {
+            if (err) {
+                console.error("Greška pri kreiranju tabele appointments:", err);
+                process.exit(1);
+            }
+            console.log("Tabela 'appointments' kreirana");
+
+            // Kreiraj tabelu services
+            const createServicesTableSql = `
             CREATE TABLE IF NOT EXISTS services (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(100) NOT NULL,
@@ -52,57 +95,74 @@ db.connect((err) => {
             ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
         `;
 
-        db.query(createServicesTableSql, (err) => {
-            if (err) {
-                console.error("Greška pri kreiranju tabele services:", err);
-                process.exit(1);
-            }
-            console.log("Tabela 'services' kreirana");
-
-            // Ubaci default usluge ako tabela prazna
-            const checkServicesSql = "SELECT COUNT(*) as count FROM services";
-            db.query(checkServicesSql, (err, results) => {
+            db.query(createServicesTableSql, (err) => {
                 if (err) {
-                    console.error("Greška:", err);
+                    console.error("Greška pri kreiranju tabele services:", err);
                     process.exit(1);
                 }
+                console.log("Tabela 'services' kreirana");
 
-                if (results[0].count === 0) {
-                    const insertServicesSql =
-                        "INSERT INTO services (name, duration, price, description, icon) VALUES ?";
-                    const defaultServices = [
-                        ["Šišanje", 30, 15.0, "Šišanje po želji", "✂️"],
-                        [
-                            "Šišanje i feniranje",
-                            45,
-                            20.0,
-                            "Šišanje sa feniranjem",
-                            "💇",
-                        ],
-                        ["Farbanje", 90, 35.0, "Farbanje cele kose", "🎨"],
-                        ["Balayage", 120, 50.0, "Tehnika balayage", "✨"],
-                        ["Pramenovi", 90, 40.0, "Pramenovi na foliju", "🌟"],
-                        ["Feniranje", 30, 12.0, "Samo feniranje", "💨"],
-                        ["Peglanje kose", 30, 10.0, "Peglanje kose", "🔧"],
-                        ["Šišanje brade", 20, 8.0, "Sređivanje brade", "🧔"],
-                    ];
-                    db.query(insertServicesSql, [defaultServices], (err) => {
-                        if (err) {
-                            console.error(
-                                "Greška pri dodavanju default usluga:",
-                                err,
-                            );
-                        } else {
-                            console.log("Default usluge dodate");
-                        }
-                    });
-                }
+                // Ubaci default usluge ako tabela prazna
+                const checkServicesSql =
+                    "SELECT COUNT(*) as count FROM services";
+                db.query(checkServicesSql, (err, results) => {
+                    if (err) {
+                        console.error("Greška:", err);
+                        process.exit(1);
+                    }
+
+                    if (results[0].count === 0) {
+                        const insertServicesSql =
+                            "INSERT INTO services (name, duration, price, description, icon) VALUES ?";
+                        const defaultServices = [
+                            ["Šišanje", 30, 15.0, "Šišanje po želji", "✂️"],
+                            [
+                                "Šišanje i feniranje",
+                                45,
+                                20.0,
+                                "Šišanje sa feniranjem",
+                                "💇",
+                            ],
+                            ["Farbanje", 90, 35.0, "Farbanje cele kose", "🎨"],
+                            ["Balayage", 120, 50.0, "Tehnika balayage", "✨"],
+                            [
+                                "Pramenovi",
+                                90,
+                                40.0,
+                                "Pramenovi na foliju",
+                                "🌟",
+                            ],
+                            ["Feniranje", 30, 12.0, "Samo feniranje", "💨"],
+                            ["Peglanje kose", 30, 10.0, "Peglanje kose", "🔧"],
+                            [
+                                "Šišanje brade",
+                                20,
+                                8.0,
+                                "Sređivanje brade",
+                                "🧔",
+                            ],
+                        ];
+                        db.query(
+                            insertServicesSql,
+                            [defaultServices],
+                            (err) => {
+                                if (err) {
+                                    console.error(
+                                        "Greška pri dodavanju default usluga:",
+                                        err,
+                                    );
+                                } else {
+                                    console.log("Default usluge dodate");
+                                }
+                            },
+                        );
+                    }
+                });
             });
-        });
 
-        // Kreiraj tabelu users
+            // Kreiraj tabelu users
 
-        const createTableSql = `
+            const createTableSql = `
         CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(100) NOT NULL,
@@ -114,55 +174,59 @@ db.connect((err) => {
         )
     `;
 
-        db.query(createTableSql, (err) => {
-            if (err) {
-                console.error("Greška pri kreiranju tabele:", err);
-                process.exit(1);
-            }
-            console.log("Tabela 'users' kreirana");
-
-            // Kreiraj admin korisnika (ako ne postoji)
-            const checkAdminSql =
-                "SELECT id FROM users WHERE email = 'admin@salon.com'";
-            db.query(checkAdminSql, (err, results) => {
+            db.query(createTableSql, (err) => {
                 if (err) {
-                    console.error("Greška:", err);
+                    console.error("Greška pri kreiranju tabele:", err);
                     process.exit(1);
                 }
+                console.log("Tabela 'users' kreirana");
 
-                if (results.length === 0) {
-                    const salt = bcrypt.genSaltSync(10);
-                    const hashedPassword = bcrypt.hashSync("admin123", salt);
+                // Kreiraj admin korisnika (ako ne postoji)
+                const checkAdminSql =
+                    "SELECT id FROM users WHERE email = 'admin@salon.com'";
+                db.query(checkAdminSql, (err, results) => {
+                    if (err) {
+                        console.error("Greška:", err);
+                        process.exit(1);
+                    }
 
-                    const insertAdminSql =
-                        "INSERT INTO users (name, email, password, phone, is_admin) VALUES (?, ?, ?, ?, ?)";
-                    db.query(
-                        insertAdminSql,
-                        [
-                            "Admin",
-                            "admin@salon.com",
-                            hashedPassword,
-                            "0600000000",
-                            true,
-                        ],
-                        (err) => {
-                            if (err) {
-                                console.error(
-                                    "Greška pri kreiranju admina:",
-                                    err,
-                                );
-                            } else {
-                                console.log("Admin korisnik kreiran:");
-                                console.log("  Email: admin@salon.com");
-                                console.log("  Lozinka: admin123");
-                            }
-                            db.end();
-                        },
-                    );
-                } else {
-                    console.log("Admin korisnik već postoji");
-                    db.end();
-                }
+                    if (results.length === 0) {
+                        const salt = bcrypt.genSaltSync(10);
+                        const hashedPassword = bcrypt.hashSync(
+                            "admin123",
+                            salt,
+                        );
+
+                        const insertAdminSql =
+                            "INSERT INTO users (name, email, password, phone, is_admin) VALUES (?, ?, ?, ?, ?)";
+                        db.query(
+                            insertAdminSql,
+                            [
+                                "Admin",
+                                "admin@salon.com",
+                                hashedPassword,
+                                "0600000000",
+                                true,
+                            ],
+                            (err) => {
+                                if (err) {
+                                    console.error(
+                                        "Greška pri kreiranju admina:",
+                                        err,
+                                    );
+                                } else {
+                                    console.log("Admin korisnik kreiran:");
+                                    console.log("  Email: admin@salon.com");
+                                    console.log("  Lozinka: admin123");
+                                }
+                                db.end();
+                            },
+                        );
+                    } else {
+                        console.log("Admin korisnik već postoji");
+                        db.end();
+                    }
+                });
             });
         });
     });

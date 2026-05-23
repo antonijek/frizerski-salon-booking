@@ -77,6 +77,63 @@ const authService = {
             );
         }
     },
+
+    /**
+     * Dohvati sve registrovane korisnike (samo admin)
+     * @returns {Promise<Array>} Lista korisnika
+     */
+    getUsers: async () => {
+        try {
+            const response = await requestInstance.get("/auth/users");
+            return response.data;
+        } catch (error) {
+            throw (
+                error.response?.data || {
+                    error: "Greška pri dohvatanju korisnika",
+                }
+            );
+        }
+    },
+
+    /**
+     * Izmeni korisnika (samo admin)
+     * @param {number} id - ID korisnika
+     * @param {Object} data - { name, email, phone, is_admin }
+     * @returns {Promise<Object>}
+     */
+    updateUser: async (id, data) => {
+        try {
+            const response = await requestInstance.put(
+                `/auth/users/${id}`,
+                data,
+            );
+            return response.data;
+        } catch (error) {
+            throw (
+                error.response?.data || {
+                    error: "Greška pri izmeni korisnika",
+                }
+            );
+        }
+    },
+
+    /**
+     * Obriši korisnika (samo admin)
+     * @param {number} id - ID korisnika
+     * @returns {Promise<Object>}
+     */
+    deleteUser: async (id) => {
+        try {
+            const response = await requestInstance.delete(`/auth/users/${id}`);
+            return response.data;
+        } catch (error) {
+            throw (
+                error.response?.data || {
+                    error: "Greška pri brisanju korisnika",
+                }
+            );
+        }
+    },
 };
 
 export default authService;

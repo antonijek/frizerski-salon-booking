@@ -1,44 +1,86 @@
-# TODO - Pregled i popravka bagova
+# TODO - Više frizera u salonu
 
-## Pronađeni problemi:
+## Plan implementacije:
 
-### 1. ⚠️ Duplirana MySQL konekcija
+### 1. Baza podataka
 
-- `backend/server.js` kreira sopstvenu MySQL konekciju umesto da koristi `backend/db.js`
-- Server.js linije 14-28 su duplikat db.js
+- [x] Dodati tabelu `barbers` u schema.sql
+- [x] Dodati `barber_id` u appointments tabelu
+- [x] Ažurirati init-db.js
 
-### 2. ⚠️ BookingForm.jsx - hardkodovan API URL
+### 2. Backend
 
-- Linija 128: `fetch(/api/appointments/date/${values.date})` - ne koristi requestInstance
-- Treba koristiti appointmentService.getByDate() umesto direktnog fetch-a
+- [x] Napraviti rutu `backend/routes/barbers.js`
+- [x] Izmeniti appointments.js da podržava barber_id
+- [x] Dodati rutu u server.js
 
-### 3. ⚠️ MyProfile.jsx - isti problem sa fetch
+### 3. Frontend - Servisi
 
-- Linija 79: `fetch(/api/appointments/date/${editForm.date})` - ne koristi requestInstance
+- [x] Napraviti `frontend/src/services/barberService.js`
 
-### 4. ⚠️ schema.sql nema icon kolonu
+### 4. Frontend - BookingForm
 
-- Tabela services u schema.sql nema `icon` kolonu (dodata je u init-db.js ali ne i u schema.sql)
+- [x] Dodati izbor frizera (opciono)
 
-### 5. ⚠️ AppointmentList.jsx - duplirana funkcionalnost
+### 5. Frontend - AdminPanel
 
-- Postoji i MyProfile.jsx i AppointmentList.jsx koji rade istu stvar
-- AppointmentList se nigde ne koristi u App.jsx
+- [x] Dodati tab "Frizeri" sa CRUD
+- [x] Prikazati frizera u listi termina
+- [x] Filter termina po frizeru
+- [x] Dodati tab "Usluge" sa CRUD
+- [x] Dodati tab "Korisnici" sa listom i upravljanjem
+- [x] Dodati tab "Statistika" sa karticama i grafikonima
 
-### 6. ⚠️ emailService.js - msmtp zavisnost
+### 6. Frontend - MyProfile
 
-- Koristi msmtp koji možda nije instaliran na Windows-u
-- Slanje mejlova će verovatno padati
+- [x] Prikazati frizera u terminima
 
-### 7. ⚠️ init-db.js - charset nije utf8mb4
+### 7. Deploy
 
-- Treba proveriti da li init-db.js koristi utf8mb4 charset
+- [ ] Push na GitHub
+- [ ] Pull na server
+- [ ] Rebuild frontend
+- [ ] Pokrenuti init-db.js na serveru
 
-## Plan popravke:
+---
 
-- [ ] Popraviti dupliranu MySQL konekciju u server.js
-- [ ] Zameniti direktne fetch pozive sa appointmentService u BookingForm.jsx
-- [ ] Zameniti direktne fetch pozive sa appointmentService u MyProfile.jsx
-- [ ] Ažurirati schema.sql sa icon kolonom
-- [ ] Proveriti i popraviti init-db.js charset
-- [ ] Testirati API
+## 📋 Pregled kompletnog projekta
+
+### Backend (Node.js + Express + MySQL)
+
+- **server.js** - Glavni server fajl, rute, middleware
+- **db.js** - MySQL konekcija
+- **init-db.js** - Inicijalizacija baze (tabele, seed podaci)
+- **emailService.js** - Slanje email notifikacija (msmtp)
+- **middleware/auth.js** - JWT autentifikacija
+- **routes/auth.js** - Login/registracija
+- **routes/appointments.js** - CRUD termina
+- **routes/services.js** - CRUD usluga
+- **routes/barbers.js** - CRUD frizera
+
+### Frontend (React + Vite + Tailwind CSS)
+
+- **HomePage** - Početna stranica sa uslugama i frizerima
+- **BookingForm** - Zakazivanje termina (izbor usluge, frizera, datuma, vremena)
+- **ServicesPage** - Pregled svih usluga
+- **AppointmentList** - Lista termina korisnika
+- **MyProfile** - Profil korisnika sa terminima
+- **AdminPanel** - Admin panel sa 5 tabova:
+    - 📅 Termini (pregled, filteri, izmena, brisanje)
+    - ✂️ Usluge (CRUD)
+    - 🧔 Frizeri (CRUD, aktivacija/deaktivacija)
+    - 👥 Korisnici (pregled, uloge, brisanje)
+    - 📊 Statistika (ukupno, danas, predstojeći, po uslugama/frizerima)
+- **ServiceCard** - Komponenta za prikaz usluge
+- **PageWrapper** - Wrapper komponenta sa navigacijom
+
+### Šta je ostalo / moguća poboljšanja:
+
+1. **Deploy** na server (push na GitHub → pull na server → rebuild)
+2. **Email notifikacije** - srediti msmtp konfiguraciju
+3. **Radno vrijeme frizera** - podešavanje po danima (već postoji u bazi)
+4. **Online plaćanje** - integracija payment gateway-a
+5. **Notifikacije u realnom vremenu** - WebSocket/Socket.IO
+6. **Mobilna aplikacija** - React Native
+7. **Recenzije i ocjene** za frizere/usluge
+8. **Multi-language** podrška

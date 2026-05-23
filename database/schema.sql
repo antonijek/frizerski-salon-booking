@@ -2,6 +2,20 @@
 CREATE DATABASE IF NOT EXISTS frizerski_salon;
 USE frizerski_salon;
 
+-- Tabela za frizere
+CREATE TABLE IF NOT EXISTS barbers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Ubaci osnovne frizere
+INSERT INTO barbers (name) VALUES
+('Marko'),
+('Jovana'),
+('Ana');
+
 -- Tabela za termine
 CREATE TABLE IF NOT EXISTS appointments (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -11,8 +25,10 @@ CREATE TABLE IF NOT EXISTS appointments (
     date DATE NOT NULL,
     time TIME NOT NULL,
     service VARCHAR(100) NOT NULL,
+    barber_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY unique_appointment (date, time)
+    UNIQUE KEY unique_appointment (date, time, barber_id),
+    FOREIGN KEY (barber_id) REFERENCES barbers(id) ON DELETE SET NULL
 );
 
 -- Tabela za korisnike

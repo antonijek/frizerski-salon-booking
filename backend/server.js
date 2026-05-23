@@ -13,9 +13,11 @@ app.use(express.json());
 const appointmentRoutes = require("./routes/appointments");
 const authRoutes = require("./routes/auth");
 const serviceRoutes = require("./routes/services");
+const barberRoutes = require("./routes/barbers");
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/services", serviceRoutes);
+app.use("/api/barbers", barberRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

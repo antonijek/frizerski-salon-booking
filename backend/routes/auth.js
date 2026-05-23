@@ -190,11 +190,9 @@ router.post("/make-admin", authenticate, (req, res) => {
                     return res.status(500).json({ error: "Greška na serveru" });
                 }
                 if (adminResults[0].count > 0) {
-                    return res
-                        .status(403)
-                        .json({
-                            error: "Već postoji admin. Samo admin može dodati novog admina.",
-                        });
+                    return res.status(403).json({
+                        error: "Već postoji admin. Samo admin može dodati novog admina.",
+                    });
                 }
                 // Nema admina - dozvoli
                 makeAdmin(email, res);
@@ -223,5 +221,75 @@ function makeAdmin(email, res) {
         });
     });
 }
+
+/**
+ * GET /api/auth/users - Dohvati sve korisnike (samo admin)
+ */
+router.get("/users", authenticate, isAdmin, (req, res) => {
+    const sql =
+        "SELECT id, name, email, phone, is_admin, created_at FROM users ORDER BY created_at DESC";
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Greška pri dohvatanju korisnika:", err);
+            return res.status(500).json({ error: "Greška na serveru" });
+        }
+        res.json(results);
+    });
+});
+
+/**
+ * PUT /api/auth/users/:id - Izmeni korisnika (samo admin)
+ */
+router.put("/users/:id", authenticate, isAdmin, (req, res) => {
+    const { id } = req.params;
+    const { name, email, phone, is_admin } = req.body;
+
+    if (!name || !email) {
+        return res.status(400).json({ error: "Ime i email su obavezni" });
+    }
+
+    const sql =
+        "UPDATE users SET name = ?, email = ?, phone = ?, is_admin = ? WHERE id = ?";
+    db.query(
+        sql,
+        [name, email, phone || null, is_admin ? 1 : 0, id],
+        (err, result) => {
+            if (err) {
+                console.error("Greška pri izmeni korisnika:", err);
+                return res.status(500).json({ error: "Greška na serveru" });
+            }
+            if (result.affectedRows === 0) {
+                return res
+                    .status(404)
+                    .json({ error: "Korisnik nije pronadjen" });
+            }
+            res.json({ message: "Korisnik uspešno izmenjen" });
+        },
+    );
+});
+
+/**
+ * DELETE /api/auth/users/:id - Obriši korisnika (samo admin)
+ */
+router.delete("/users/:id", authenticate, isAdmin, (req, res) => {
+    const { id } = req.params;
+
+    // Ne dozvoli brisanje samog sebe
+    if (parseInt(id) === req.user.id) {
+        return res.status(400).json({ error: "Ne možete obrisati sami sebe" });
+    }
+
+    const sql = "DELETE FROM users WHERE id = ?";
+    db.query(sql, [id], (err, result) => {
+        if (err) {
+            console.error("Greška pri brisanju korisnika:", err);
+            return res.status(500).json({ error: "Greška na serveru" });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Korisnik nije pronadjen" });
+        }
+        res.json({ message: "Korisnik uspešno obrisan" });
+    });
+});
 
 module.exports = router;

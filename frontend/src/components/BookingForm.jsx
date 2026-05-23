@@ -6,6 +6,7 @@ import { useAppContext } from "../context/AppContext";
 import { useAuth } from "../context/AuthContext";
 import serviceService from "../services/serviceService";
 import appointmentService from "../services/appointmentService";
+import barberService from "../services/barberService";
 
 // ============================================
 // BookingForm - Forma za zakazivanje termina
@@ -31,56 +32,9 @@ const BookingForm = ({ onNavigate }) => {
     const [loading, setLoading] = useState(false);
     const [showProfilePrompt, setShowProfilePrompt] = useState(false);
     const [services, setServices] = useState([]);
+    const [barbers, setBarbers] = useState([]);
 
     const { workingHours, booking } = salonConfig;
-
-    // Ucitaj usluge iz baze
-    useEffect(() => {
-        const fetchServices = async () => {
-            try {
-                const data = await serviceService.getAll();
-                setServices(data);
-            } catch (err) {
-                console.error("Greška pri učitavanju usluga:", err);
-            }
-        };
-        fetchServices();
-    }, []);
-
-    // Popuni formu podacima ulogovanog korisnika
-    useEffect(() => {
-        if (isAuthenticated && user) {
-            // Simuliramo handleChange za svako polje
-            const fields = [
-                { name: "name", value: user.name || "" },
-                { name: "phone", value: user.phone || "" },
-                { name: "email", value: user.email || "" },
-            ];
-            fields.forEach((field) => {
-                handleChange({ target: field });
-            });
-        }
-    }, [isAuthenticated, user]);
-
-    // Generisi radne sate na osnovu config-a
-    const generateTimeSlots = () => {
-        const slots = [];
-        const [startH, startM] = workingHours.start.split(":").map(Number);
-        const [endH, endM] = workingHours.end.split(":").map(Number);
-        const startMinutes = startH * 60 + startM;
-        const endMinutes = endH * 60 + endM;
-
-        for (let m = startMinutes; m < endMinutes; m += workingHours.interval) {
-            const h = Math.floor(m / 60);
-            const min = m % 60;
-            slots.push(
-                `${h.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`,
-            );
-        }
-        return slots;
-    };
-
-    const timeSlots = generateTimeSlots();
 
     // Validaciona pravila
     const validationRules = {
@@ -123,12 +77,128 @@ const BookingForm = ({ onNavigate }) => {
         validationRules,
     );
 
-    // Dohvati zauzete termine kada se izabere datum
+    // Ucitaj usluge i frizere iz baze
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [servicesData, barbersData] = await Promise.all([
+                    serviceService.getAll(),
+                    barberService.getAll(),
+                ]);
+                setServices(servicesData);
+                setBarbers(barbersData);
+            } catch (err) {
+                console.error("Greška pri učitavanju podataka:", err);
+            }
+        };
+        fetchData();
+    }, []);
+
+    // Popuni formu podacima ulogovanog korisnika
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            const fields = [
+                { name: "name", value: user.name || "" },
+                { name: "phone", value: user.phone || "" },
+                { name: "email", value: user.email || "" },
+            ];
+            fields.forEach((field) => {
+                handleChange({ target: field });
+            });
+        }
+    }, [isAuthenticated, user]);
+
+    // Pronadji izabranog frizera
+    const selectedBarber = values.barber_id
+        ? barbers.find((b) => b.id === parseInt(values.barber_id))
+        : null;
+
+    // Generisi radne sate - uzima najraniji pocetak i najkasniji kraj od svih frizera
+    // Ako nema frizera, koristi default iz config-a
+    const generateTimeSlots = () => {
+        // Pronadji najraniji pocetak i najkasniji kraj medju frizerima
+        let earliestStart = workingHours.start;
+        let latestEnd = workingHours.end;
+        if (barbers.length > 0) {
+            barbers.forEach((b) => {
+                if (b.work_start && b.work_start < earliestStart)
+                    earliestStart = b.work_start;
+                if (b.work_end && b.work_end > latestEnd)
+                    latestEnd = b.work_end;
+            });
+        }
+
+        const slots = [];
+        const [startH, startM] = earliestStart.split(":").map(Number);
+        const [endH, endM] = latestEnd.split(":").map(Number);
+        const startMinutes = startH * 60 + startM;
+        const endMinutes = endH * 60 + endM;
+
+        for (let m = startMinutes; m < endMinutes; m += workingHours.interval) {
+            const h = Math.floor(m / 60);
+            const min = m % 60;
+            slots.push(
+                `${h.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`,
+            );
+        }
+        return slots;
+    };
+
+    // Filtriraj slotove po radnom vremenu izabranog frizera (ako je izabran)
+    const filterSlotsByBarber = (slots) => {
+        if (!selectedBarber) return slots; // nije izabran frizer - prikazi sve
+        const start = selectedBarber.work_start || workingHours.start;
+        const end = selectedBarber.work_end || workingHours.end;
+        const [startH, startM] = start.split(":").map(Number);
+        const [endH, endM] = end.split(":").map(Number);
+        const barberStart = startH * 60 + startM;
+        const barberEnd = endH * 60 + endM;
+
+        return slots.filter((slot) => {
+            const [h, m] = slot.split(":").map(Number);
+            const slotMinutes = h * 60 + m;
+            return slotMinutes >= barberStart && slotMinutes < barberEnd;
+        });
+    };
+
+    const allTimeSlots = generateTimeSlots();
+    const timeSlots = filterSlotsByBarber(allTimeSlots);
+
+    // Proveri da li je izabrani datum radni dan za izabranog frizera
+    const isDateAvailable = (dateStr) => {
+        if (!dateStr) return true;
+        if (!selectedBarber) return true; // nije izabran frizer - uvek dostupno
+        const date = new Date(dateStr + "T00:00:00");
+        const dayOfWeek = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+        // Konvertujemo u format koji koristimo u bazi: 1=Pon, 2=Uto, ..., 7=Ned
+        const dbDay = dayOfWeek === 0 ? 7 : dayOfWeek;
+
+        if (selectedBarber?.work_days) {
+            const workDays = selectedBarber.work_days
+                .split(",")
+                .map((d) => d.trim());
+            return workDays.includes(dbDay.toString());
+        }
+        return true;
+    };
+
+    // Dohvati zauzete termine kada se izabere datum i/ili frizer
     useEffect(() => {
         if (values.date) {
-            appointmentService
-                .getByDate(values.date)
-                .then((data) => {
+            const fetchBookedTimes = async () => {
+                try {
+                    let data;
+                    if (values.barber_id) {
+                        // Ako je izabran frizer, dohvati samo njegove termine
+                        data = await appointmentService.getByDateAndBarber(
+                            values.date,
+                            values.barber_id,
+                        );
+                    } else {
+                        // Ako nije izabran frizer, dohvati sve termine
+                        data = await appointmentService.getByDate(values.date);
+                    }
+
                     // Izracunaj sve slotove koji su blokirani (ukljucujuci i trajanje usluge)
                     const blockedSlots = new Set();
                     data.forEach((a) => {
@@ -147,10 +217,13 @@ const BookingForm = ({ onNavigate }) => {
                         }
                     });
                     setBookedTimes([...blockedSlots]);
-                })
-                .catch(() => setBookedTimes([]));
+                } catch {
+                    setBookedTimes([]);
+                }
+            };
+            fetchBookedTimes();
         }
-    }, [values.date]);
+    }, [values.date, values.barber_id]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -356,6 +429,45 @@ const BookingForm = ({ onNavigate }) => {
                         </p>
                     )}
                 </div>
+
+                {/* Izbor frizera (opciono) */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Željeni frizer (opciono)
+                    </label>
+                    <select
+                        name="barber_id"
+                        value={values.barber_id || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                    >
+                        <option value="">Bilo koji frizer</option>
+                        {barbers.map((barber) => (
+                            <option key={barber.id} value={barber.id}>
+                                ✂️ {barber.name}
+                                {barber.work_start &&
+                                    barber.work_end &&
+                                    ` (${barber.work_start}-${barber.work_end})`}
+                            </option>
+                        ))}
+                    </select>
+                    {selectedBarber && (
+                        <p className="mt-1 text-xs text-gray-500">
+                            Radno vreme: {selectedBarber.work_start || "?"} -{" "}
+                            {selectedBarber.work_end || "?"}
+                        </p>
+                    )}
+                </div>
+
+                {/* Upozorenje ako datum nije radni dan za izabranog frizera */}
+                {values.date &&
+                    selectedBarber &&
+                    !isDateAvailable(values.date) && (
+                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+                            ⚠️ Izabrani frizer ne radi na ovaj dan. Izaberite
+                            drugi datum ili drugog frizera.
+                        </div>
+                    )}
 
                 {/* Submit dugme */}
                 <button

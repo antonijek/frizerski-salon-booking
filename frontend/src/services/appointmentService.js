@@ -43,6 +43,27 @@ const appointmentService = {
     },
 
     /**
+     * Dohvati termine za odredjeni datum i frizera
+     * @param {string} date - Datum u formatu YYYY-MM-DD
+     * @param {number} barberId - ID frizera
+     * @returns {Promise<Array>} Lista termina za taj datum i frizera
+     */
+    getByDateAndBarber: async (date, barberId) => {
+        try {
+            const response = await requestInstance.get(
+                `/appointments/date/${date}/barber/${barberId}`,
+            );
+            return response.data;
+        } catch (error) {
+            throw (
+                error.response?.data || {
+                    error: "Greška pri dohvatanju termina",
+                }
+            );
+        }
+    },
+
+    /**
      * Dohvati termine po broju telefona
      * @param {string} phone - Broj telefona
      * @returns {Promise<Array>} Lista termina za taj broj
