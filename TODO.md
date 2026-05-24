@@ -1,86 +1,89 @@
-# TODO - Više frizera u salonu
+# Refactoring - TODO
 
-## Plan implementacije:
+## Faza 1: Admin Panel ✅
 
-### 1. Baza podataka
+- [x] LoadingSpinner.jsx - spinner za ucitavanje
+- [x] EmptyState.jsx - prazan state sa ikonicom i porukom
+- [x] ConfirmDialog.jsx - dijalog za potvrdu brisanja
+- [x] AdminFilters.jsx - filteri za termine (datum, frizer, tip)
+- [x] AdminModal.jsx - reusable modal za forme
+- [x] NotificationBanner.jsx - error/success poruke
+- [x] useAdminAppointments.js - logika za termine
+- [x] useAdminServices.js - logika za usluge
+- [x] useAdminBarbers.js - logika za frizere
+- [x] useAdminUsers.js - logika za korisnike
+- [x] AppointmentsTab.jsx - refaktorisan
+- [x] ServicesTab.jsx - refaktorisan
+- [x] BarbersTab.jsx - refaktorisan
+- [x] UsersTab.jsx - refaktorisan
+- [x] StatsTab.jsx - refaktorisan
 
-- [x] Dodati tabelu `barbers` u schema.sql
-- [x] Dodati `barber_id` u appointments tabelu
-- [x] Ažurirati init-db.js
+## Faza 2: Booking Form ✅
 
-### 2. Backend
+- [x] useBookingForm.js - hook za formu zakazivanja
+- [x] FormField.jsx - reusable input polje
+- [x] TimeSlotPicker.jsx - grid za izbor vremena
+- [x] SuccessPrompt.jsx - poruka posle zakazivanja
+- [x] BookingForm.jsx - refaktorisan (koristi hook + komponente)
 
-- [x] Napraviti rutu `backend/routes/barbers.js`
-- [x] Izmeniti appointments.js da podržava barber_id
-- [x] Dodati rutu u server.js
+## Faza 3: My Profile ✅
 
-### 3. Frontend - Servisi
+- [x] useMyProfile.js - hook za profil korisnika
+- [x] AppointmentCard.jsx - kartica za prikaz termina
+- [x] EditAppointmentModal.jsx - modal za izmenu termina
+- [x] MyProfile.jsx - refaktorisan (koristi hook + komponente)
+- [x] ConfirmDialog dodat u MyProfile (zamenjen confirm())
 
-- [x] Napraviti `frontend/src/services/barberService.js`
+## Faza 4: Čišćenje ✅
 
-### 4. Frontend - BookingForm
+- [x] LoadingSpinner premešten u common/ (umesto dupliranja u admin/)
+- [x] ConfirmDialog iz admin/ obrisan (koristi se common/ConfirmDialog)
+- [x] AppointmentList.jsx obrisan (stara komponenta)
+- [x] LoadingSpinner korišćen u MyProfile.jsx i ServicesPage.jsx
 
-- [x] Dodati izbor frizera (opciono)
+## Struktura projekta
 
-### 5. Frontend - AdminPanel
-
-- [x] Dodati tab "Frizeri" sa CRUD
-- [x] Prikazati frizera u listi termina
-- [x] Filter termina po frizeru
-- [x] Dodati tab "Usluge" sa CRUD
-- [x] Dodati tab "Korisnici" sa listom i upravljanjem
-- [x] Dodati tab "Statistika" sa karticama i grafikonima
-
-### 6. Frontend - MyProfile
-
-- [x] Prikazati frizera u terminima
-
-### 7. Deploy
-
-- [ ] Push na GitHub
-- [ ] Pull na server
-- [ ] Rebuild frontend
-- [ ] Pokrenuti init-db.js na serveru
-
----
-
-## 📋 Pregled kompletnog projekta
-
-### Backend (Node.js + Express + MySQL)
-
-- **server.js** - Glavni server fajl, rute, middleware
-- **db.js** - MySQL konekcija
-- **init-db.js** - Inicijalizacija baze (tabele, seed podaci)
-- **emailService.js** - Slanje email notifikacija (msmtp)
-- **middleware/auth.js** - JWT autentifikacija
-- **routes/auth.js** - Login/registracija
-- **routes/appointments.js** - CRUD termina
-- **routes/services.js** - CRUD usluga
-- **routes/barbers.js** - CRUD frizera
-
-### Frontend (React + Vite + Tailwind CSS)
-
-- **HomePage** - Početna stranica sa uslugama i frizerima
-- **BookingForm** - Zakazivanje termina (izbor usluge, frizera, datuma, vremena)
-- **ServicesPage** - Pregled svih usluga
-- **AppointmentList** - Lista termina korisnika
-- **MyProfile** - Profil korisnika sa terminima
-- **AdminPanel** - Admin panel sa 5 tabova:
-    - 📅 Termini (pregled, filteri, izmena, brisanje)
-    - ✂️ Usluge (CRUD)
-    - 🧔 Frizeri (CRUD, aktivacija/deaktivacija)
-    - 👥 Korisnici (pregled, uloge, brisanje)
-    - 📊 Statistika (ukupno, danas, predstojeći, po uslugama/frizerima)
-- **ServiceCard** - Komponenta za prikaz usluge
-- **PageWrapper** - Wrapper komponenta sa navigacijom
-
-### Šta je ostalo / moguća poboljšanja:
-
-1. **Deploy** na server (push na GitHub → pull na server → rebuild)
-2. **Email notifikacije** - srediti msmtp konfiguraciju
-3. **Radno vrijeme frizera** - podešavanje po danima (već postoji u bazi)
-4. **Online plaćanje** - integracija payment gateway-a
-5. **Notifikacije u realnom vremenu** - WebSocket/Socket.IO
-6. **Mobilna aplikacija** - React Native
-7. **Recenzije i ocjene** za frizere/usluge
-8. **Multi-language** podrška
+```
+frontend/src/
+├── components/
+│   ├── admin/
+│   │   ├── AdminFilters.jsx
+│   │   ├── AdminModal.jsx
+│   │   ├── AppointmentsTab.jsx
+│   │   ├── BarbersTab.jsx
+│   │   ├── EmptyState.jsx
+│   │   ├── NotificationBanner.jsx
+│   │   ├── ServicesTab.jsx
+│   │   ├── StatsTab.jsx
+│   │   └── UsersTab.jsx
+│   ├── common/
+│   │   ├── AppointmentCard.jsx
+│   │   ├── ConfirmDialog.jsx
+│   │   ├── EditAppointmentModal.jsx
+│   │   ├── FormField.jsx
+│   │   ├── LoadingSpinner.jsx
+│   │   ├── PageWrapper.jsx
+│   │   ├── ServiceCard.jsx
+│   │   ├── SuccessPrompt.jsx
+│   │   └── TimeSlotPicker.jsx
+│   ├── AdminPanel.jsx
+│   ├── BookingForm.jsx
+│   ├── HomePage.jsx
+│   ├── MyProfile.jsx
+│   └── ServicesPage.jsx
+├── hooks/
+│   ├── useAdminAppointments.js
+│   ├── useAdminBarbers.js
+│   ├── useAdminServices.js
+│   ├── useAdminUsers.js
+│   ├── useAppointments.js
+│   ├── useBookingForm.js
+│   ├── useForm.js
+│   └── useMyProfile.js
+└── services/
+    ├── appointmentService.js
+    ├── authService.js
+    ├── barberService.js
+    ├── requestInstance.js
+    └── serviceService.js
+```

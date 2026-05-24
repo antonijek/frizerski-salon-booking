@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import SectionWrapper from "./common/SectionWrapper";
 import ServiceCard from "./common/ServiceCard";
+import LoadingSpinner from "./common/LoadingSpinner";
 import serviceService from "../services/serviceService";
 
 // ============================================
@@ -26,16 +27,7 @@ const ServicesPage = () => {
         fetchServices();
     }, []);
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="text-center">
-                    <div className="text-5xl mb-4 animate-spin">⏳</div>
-                    <p className="text-gray-600">Učitavanje usluga...</p>
-                </div>
-            </div>
-        );
-    }
+    if (loading) return <LoadingSpinner message="Učitavanje usluga..." />;
 
     if (error) {
         return (

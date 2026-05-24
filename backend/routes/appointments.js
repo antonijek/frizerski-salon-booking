@@ -1,13 +1,191 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../db");
+const { authenticate, isAdmin } = require("../middleware/auth");
 const {
     sendSalonNotification,
     sendCustomerConfirmation,
     sendCancellationNotification,
 } = require("../emailService");
 
+// ============================================
+// Statistika (samo admin)
+// ============================================
+
+/**
+ * GET /api/appointments/stats - Dohvati statistiku
+ */
+router.get("/stats", authenticate, isAdmin, (req, res) => {
+    const stats = {};
+
+    // Ukupan broj termina
+    db.query("SELECT COUNT(*) as total FROM appointments", (err, results) => {
+        if (err) return res.status(500).json({ error: "Greška na serveru" });
+        stats.totalAppointments = results[0].total;
+
+        // Termini po uslugama
+        db.query(
+            "SELECT service, COUNT(*) as count FROM appointments GROUP BY service ORDER BY count DESC",
+            (err, results) => {
+                if (err)
+                    return res.status(500).json({ error: "Greška na serveru" });
+                stats.appointmentsByService = results;
+
+                // Termini po frizerima
+                db.query(
+                    `SELECT b.name, COUNT(a.id) as count 
+                         FROM appointments a 
+                         RIGHT JOIN barbers b ON a.barber_id = b.id 
+                         GROUP BY b.id, b.name 
+                         ORDER BY count DESC`,
+                    (err, results) => {
+                        if (err)
+                            return res
+                                .status(500)
+                                .json({ error: "Greška na serveru" });
+                        stats.appointmentsByBarber = results;
+
+                        // Mesečna statistika (poslednjih 12 meseci)
+                        db.query(
+                            `SELECT DATE_FORMAT(date, '%Y-%m') as month, COUNT(*) as count 
+                                 FROM appointments 
+                                 WHERE date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) 
+                                 GROUP BY DATE_FORMAT(date, '%Y-%m') 
+                                 ORDER BY month`,
+                            (err, results) => {
+                                if (err)
+                                    return res
+                                        .status(500)
+                                        .json({ error: "Greška na serveru" });
+                                stats.monthlyStats = results;
+
+                                // Prihod po mesecima
+                                db.query(
+                                    `SELECT DATE_FORMAT(a.date, '%Y-%m') as month, SUM(s.price) as revenue
+                                         FROM appointments a 
+                                         LEFT JOIN services s ON a.service = s.name 
+                                         WHERE a.date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) 
+                                         GROUP BY DATE_FORMAT(a.date, '%Y-%m') 
+                                         ORDER BY month`,
+                                    (err, results) => {
+                                        if (err)
+                                            return res.status(500).json({
+                                                error: "Greška na serveru",
+                                            });
+                                        stats.monthlyRevenue = results;
+
+                                        // Broj korisnika
+                                        db.query(
+                                            "SELECT COUNT(*) as total FROM users",
+                                            (err, results) => {
+                                                if (err)
+                                                    return res
+                                                        .status(500)
+                                                        .json({
+                                                            error: "Greška na serveru",
+                                                        });
+                                                stats.totalUsers =
+                                                    results[0].total;
+
+                                                // Današnji termini
+                                                db.query(
+                                                    "SELECT COUNT(*) as count FROM appointments WHERE date = CURDATE()",
+                                                    (err, results) => {
+                                                        if (err)
+                                                            return res
+                                                                .status(500)
+                                                                .json({
+                                                                    error: "Greška na serveru",
+                                                                });
+                                                        stats.todayAppointments =
+                                                            results[0].count;
+
+                                                        // Broj aktivnih usluga
+                                                        db.query(
+                                                            "SELECT COUNT(*) as total FROM services",
+
+                                                            (err, results) => {
+                                                                if (err)
+                                                                    return res
+                                                                        .status(
+                                                                            500,
+                                                                        )
+                                                                        .json({
+                                                                            error: "Greška na serveru",
+                                                                        });
+                                                                stats.totalServices =
+                                                                    results[0].total;
+
+                                                                // Broj aktivnih frizera
+                                                                db.query(
+                                                                    "SELECT COUNT(*) as total FROM barbers WHERE is_active = 1",
+                                                                    (
+                                                                        err,
+                                                                        results,
+                                                                    ) => {
+                                                                        if (err)
+                                                                            return res
+                                                                                .status(
+                                                                                    500,
+                                                                                )
+                                                                                .json(
+                                                                                    {
+                                                                                        error: "Greška na serveru",
+                                                                                    },
+                                                                                );
+                                                                        stats.totalBarbers =
+                                                                            results[0].total;
+
+                                                                        // Ukupna zarada
+                                                                        db.query(
+                                                                            `SELECT COALESCE(SUM(s.price), 0) as total
+                                                                             FROM appointments a
+                                                                             LEFT JOIN services s ON a.service = s.name`,
+                                                                            (
+                                                                                err,
+                                                                                results,
+                                                                            ) => {
+                                                                                if (
+                                                                                    err
+                                                                                )
+                                                                                    return res
+                                                                                        .status(
+                                                                                            500,
+                                                                                        )
+                                                                                        .json(
+                                                                                            {
+                                                                                                error: "Greška na serveru",
+                                                                                            },
+                                                                                        );
+                                                                                stats.totalRevenue =
+                                                                                    results[0].total;
+
+                                                                                res.json(
+                                                                                    stats,
+                                                                                );
+                                                                            },
+                                                                        );
+                                                                    },
+                                                                );
+                                                            },
+                                                        );
+                                                    },
+                                                );
+                                            },
+                                        );
+                                    },
+                                );
+                            },
+                        );
+                    },
+                );
+            },
+        );
+    });
+});
+
 // Dohvati sve termine (sa cenom usluge i frizerom)
+
 router.get("/", (req, res) => {
     const sql =
         "SELECT a.id, a.name, a.phone, a.email, DATE_FORMAT(a.date, '%Y-%m-%d') as date, a.time, a.service, s.price, a.barber_id, b.name as barber_name, a.created_at FROM appointments a LEFT JOIN services s ON a.service = s.name LEFT JOIN barbers b ON a.barber_id = b.id ORDER BY a.date, a.time";

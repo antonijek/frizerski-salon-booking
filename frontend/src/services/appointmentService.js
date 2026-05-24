@@ -147,6 +147,23 @@ const appointmentService = {
             );
         }
     },
+
+    /**
+     * Dohvati statistiku (samo admin)
+     * @returns {Promise<Object>} Statistički podaci
+     */
+    getStats: async () => {
+        try {
+            const response = await requestInstance.get("/appointments/stats");
+            return response.data;
+        } catch (error) {
+            throw (
+                error.response?.data || {
+                    error: "Greška pri dohvatanju statistike",
+                }
+            );
+        }
+    },
 };
 
 export default appointmentService;

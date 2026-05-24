@@ -22,8 +22,8 @@ const barberService = {
     /**
      * Kreiraj novog frizera (admin)
      */
-    async create(name) {
-        const response = await request.post(API_URL, { name });
+    async create(data) {
+        const response = await request.post(API_URL, data);
         return response.data;
     },
 
