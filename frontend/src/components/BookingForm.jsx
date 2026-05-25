@@ -128,23 +128,18 @@ const BookingForm = ({ onNavigate }) => {
                     )}
                 </div>
 
-                {/* Izbor frizera (obavezno) */}
+                {/* Izbor frizera (opciono) */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Izaberite frizera *
+                        Željeni frizer (opciono)
                     </label>
                     <select
                         name="barber_id"
                         value={values.barber_id || ""}
                         onChange={handleChange}
-                        onBlur={handleBlur}
-                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none ${
-                            touched.barber_id && errors.barber_id
-                                ? "border-red-300 bg-red-50"
-                                : "border-gray-300"
-                        }`}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
                     >
-                        <option value="">Izaberite frizera</option>
+                        <option value="">Bilo koji frizer</option>
                         {barbers.map((barber) => (
                             <option key={barber.id} value={barber.id}>
                                 ✂️ {barber.name}
@@ -154,11 +149,6 @@ const BookingForm = ({ onNavigate }) => {
                             </option>
                         ))}
                     </select>
-                    {touched.barber_id && errors.barber_id && (
-                        <p className="mt-1 text-sm text-red-600">
-                            {errors.barber_id}
-                        </p>
-                    )}
                     {selectedBarber && (
                         <p className="mt-1 text-xs text-gray-500">
                             Radno vreme: {selectedBarber.work_start || "?"} -{" "}
