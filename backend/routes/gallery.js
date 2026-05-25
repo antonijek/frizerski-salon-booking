@@ -4,6 +4,7 @@ const db = require("../db");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const sharp = require("sharp");
 const { authenticate } = require("../middleware/auth");
 
 // ============================================
@@ -90,6 +91,37 @@ router.post("/upload", authenticate, upload.single("image"), (req, res) => {
     if (!alt || !alt.trim()) {
         return res.status(400).json({ error: "Naziv slike je obavezan" });
     }
+
+    // ============================================
+    // Optimizacija slike sa Sharp-om
+    // ============================================
+    const filePath = path.join(uploadDir, req.file.filename);
+    sharp(filePath)
+        .resize({ width: 1200, withoutEnlargement: true }) // max 1200px širine, ne uvećava male slike
+        .jpeg({ quality: 80, mozjpeg: true }) // JPEG kvalitet 80%
+        .png({ quality: 80, compressionLevel: 9 }) // PNG kompresija
+        .webp({ quality: 80 }) // WebP kvalitet 80%
+        .toFile(
+            filePath.replace(
+                /\.[^.]+$/,
+                "-optimized" + path.extname(req.file.filename),
+            ),
+        )
+        .then((info) => {
+            // Zameni original optimizovanom slikom
+            const optimizedPath = filePath.replace(
+                /\.[^.]+$/,
+                "-optimized" + path.extname(req.file.filename),
+            );
+            fs.renameSync(optimizedPath, filePath);
+            console.log(
+                `Slika optimizovana: ${req.file.filename} (${info.size} bajtova)`,
+            );
+        })
+        .catch((err) => {
+            console.error("Greška pri optimizaciji slike:", err);
+            // Nastavi dalje i sa neoptimizovanom slikom
+        });
 
     // Dohvati max sort_order da dodamo na kraj
     db.query(
