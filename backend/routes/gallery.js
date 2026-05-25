@@ -96,23 +96,29 @@ router.post("/upload", authenticate, upload.single("image"), (req, res) => {
     // Optimizacija slike sa Sharp-om
     // ============================================
     const filePath = path.join(uploadDir, req.file.filename);
-    sharp(filePath)
-        .resize({ width: 1200, withoutEnlargement: true }) // max 1200px širine, ne uvećava male slike
-        .jpeg({ quality: 80, mozjpeg: true }) // JPEG kvalitet 80%
-        .png({ quality: 80, compressionLevel: 9 }) // PNG kompresija
-        .webp({ quality: 80 }) // WebP kvalitet 80%
-        .toFile(
-            filePath.replace(
-                /\.[^.]+$/,
-                "-optimized" + path.extname(req.file.filename),
-            ),
-        )
+    const ext = path.extname(req.file.filename).toLowerCase();
+
+    let sharpInstance = sharp(filePath).resize({
+        width: 1200,
+        withoutEnlargement: true,
+    });
+
+    // Primeni odgovarajuću kompresiju na osnovu formata
+    if (ext === ".jpg" || ext === ".jpeg") {
+        sharpInstance = sharpInstance.jpeg({ quality: 80, mozjpeg: true });
+    } else if (ext === ".png") {
+        sharpInstance = sharpInstance.png({ quality: 80, compressionLevel: 9 });
+    } else if (ext === ".webp") {
+        sharpInstance = sharpInstance.webp({ quality: 80 });
+    }
+    // GIF preskačemo jer Sharp ne komprimuje GIF-ove dobro
+
+    const optimizedPath = filePath.replace(/\.[^.]+$/, "-optimized" + ext);
+
+    sharpInstance
+        .toFile(optimizedPath)
         .then((info) => {
             // Zameni original optimizovanom slikom
-            const optimizedPath = filePath.replace(
-                /\.[^.]+$/,
-                "-optimized" + path.extname(req.file.filename),
-            );
             fs.renameSync(optimizedPath, filePath);
             console.log(
                 `Slika optimizovana: ${req.file.filename} (${info.size} bajtova)`,
@@ -120,7 +126,10 @@ router.post("/upload", authenticate, upload.single("image"), (req, res) => {
         })
         .catch((err) => {
             console.error("Greška pri optimizaciji slike:", err);
-            // Nastavi dalje i sa neoptimizovanom slikom
+            // Ako optimizacija ne uspe, obriši temp fajl ako postoji
+            try {
+                if (fs.existsSync(optimizedPath)) fs.unlinkSync(optimizedPath);
+            } catch (e) {}
         });
 
     // Dohvati max sort_order da dodamo na kraj
