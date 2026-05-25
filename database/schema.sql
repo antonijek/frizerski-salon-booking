@@ -6,15 +6,22 @@ USE frizerski_salon;
 CREATE TABLE IF NOT EXISTS barbers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
+    image_url VARCHAR(500),
+    title VARCHAR(100),
+    bio TEXT,
     is_active BOOLEAN DEFAULT TRUE,
+    work_days VARCHAR(20) DEFAULT '1,2,3,4,5,6',
+    work_start TIME DEFAULT '09:00:00',
+    work_end TIME DEFAULT '17:00:00',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Ubaci osnovne frizere
-INSERT INTO barbers (name) VALUES
-('Marko'),
-('Jovana'),
-('Ana');
+INSERT INTO barbers (name, image_url, title, bio) VALUES
+('Marija Petrović', 'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=300&h=300&fit=crop', 'Senior frizer', 'Sa preko 10 godina iskustva, specijalizovana za moderne tehnike šišanja i farbanja.'),
+('Jovan Jovanović', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop', 'Barber', 'Stručnjak za muške frizure i brijanje, sa više od 8 godina iskustva.'),
+('Ana Nikolić', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&h=300&fit=crop', 'Kolorista', 'Specijalista za bojenje kose i balayage tehnike. Stalno prati najnovije trendove.');
+
 
 -- Tabela za termine
 CREATE TABLE IF NOT EXISTS appointments (
