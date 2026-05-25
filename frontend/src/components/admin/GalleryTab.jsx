@@ -92,10 +92,27 @@ const GalleryTab = () => {
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
-            await loadImages();
+
+            // Učitaj galeriju ponovo - ako ovo padne, slika je ipak dodata
+            try {
+                await loadImages();
+            } catch (loadErr) {
+                console.error(
+                    "Greška pri osvežavanju galerije (slika je dodata):",
+                    loadErr,
+                );
+                setError(
+                    "Slika je dodata, ali greška pri osvežavanju galerije",
+                );
+            }
         } catch (err) {
-            setError("Greška pri dodavanju slike");
-            console.error(err);
+            const errorMsg =
+                err.response?.data?.error ||
+                err.message ||
+                "Greška pri dodavanju slike";
+            console.error("Greška pri dodavanju slike:", err);
+            console.error("Detalji:", err.response?.data);
+            setError(errorMsg);
         } finally {
             setSaving(false);
         }
