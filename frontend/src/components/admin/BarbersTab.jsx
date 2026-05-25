@@ -60,10 +60,10 @@ const BarbersTab = () => {
                     {barbers.map((barber) => (
                         <div
                             key={barber.id}
-                            className="bg-white rounded-xl shadow-sm p-6 flex items-center justify-between"
+                            className="bg-white rounded-xl shadow-sm p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                         >
                             <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-full overflow-hidden">
+                                <div className="w-20 h-20 sm:w-16 sm:h-16 rounded-full overflow-hidden flex-shrink-0">
                                     {barber.image_url ? (
                                         <img
                                             src={barber.image_url}
