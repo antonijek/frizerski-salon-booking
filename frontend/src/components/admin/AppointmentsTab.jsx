@@ -5,6 +5,7 @@ import NotificationBanner from "./NotificationBanner";
 import AdminFilters from "./AdminFilters";
 import AdminModal from "./AdminModal";
 import ConfirmDialog from "../common/ConfirmDialog";
+import TimeSlotPicker from "../common/TimeSlotPicker";
 
 const AppointmentsTab = () => {
     const {
@@ -21,6 +22,8 @@ const AppointmentsTab = () => {
         editForm,
         saving,
         confirmDelete,
+        timeSlots,
+        bookedTimes,
         setFilter,
         setSelectedBarber,
         setSelectedDate,
@@ -207,32 +210,26 @@ const AppointmentsTab = () => {
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
                         />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Datum *
-                            </label>
-                            <input
-                                type="date"
-                                name="date"
-                                value={editForm.date}
-                                onChange={handleEditChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Vreme *
-                            </label>
-                            <input
-                                type="time"
-                                name="time"
-                                value={editForm.time}
-                                onChange={handleEditChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                            />
-                        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Datum *
+                        </label>
+                        <input
+                            type="date"
+                            name="date"
+                            value={editForm.date}
+                            onChange={handleEditChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                        />
                     </div>
+
+                    {/* Vreme - TimeSlotPicker */}
+                    <TimeSlotPicker
+                        timeSlots={timeSlots}
+                        bookedTimes={bookedTimes}
+                        selectedTime={editForm.time}
+                        onSelect={handleEditChange}
+                    />
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Usluga *
@@ -248,10 +245,36 @@ const AppointmentsTab = () => {
                                 <option key={s.name} value={s.name}>
                                     {s.icon || "✂️"} {s.name} -{" "}
                                     {parseFloat(s.price).toFixed(2)}€
+                                    {s.duration ? ` (~${s.duration}min)` : ""}
                                 </option>
                             ))}
                         </select>
                     </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Frizer
+                        </label>
+                        <select
+                            name="barber_id"
+                            value={editForm.barber_id}
+                            onChange={handleEditChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                        >
+                            <option value="">Automatski dodeli</option>
+                            {barbers.map((b) => (
+                                <option key={b.id} value={b.id}>
+                                    🧔 {b.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    {/* Poruka o grešci */}
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                            {error}
+                        </div>
+                    )}
+
                     <div className="flex gap-3 pt-2">
                         <button
                             type="button"

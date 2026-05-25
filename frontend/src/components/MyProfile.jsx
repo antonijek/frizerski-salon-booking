@@ -21,6 +21,7 @@ const MyProfile = () => {
         bookedTimes,
         saving,
         services,
+        barbers,
         timeSlots,
         minDate,
         maxDateStr,
@@ -120,6 +121,7 @@ const MyProfile = () => {
                 editingAppointment={editingAppointment}
                 editForm={editForm}
                 services={services}
+                barbers={barbers}
                 timeSlots={timeSlots}
                 bookedTimes={bookedTimes}
                 saving={saving}

@@ -9,9 +9,11 @@ const EditAppointmentModal = ({
     editingAppointment,
     editForm,
     services,
+    barbers,
     timeSlots,
     bookedTimes,
     saving,
+    error,
     minDate,
     maxDateStr,
     onClose,
@@ -84,6 +86,26 @@ const EditAppointmentModal = ({
                         onSelect={onChange}
                     />
 
+                    {/* Frizer */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Frizer
+                        </label>
+                        <select
+                            name="barber_id"
+                            value={editForm.barber_id}
+                            onChange={onChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                        >
+                            <option value="">Bilo koji frizer</option>
+                            {barbers.map((barber) => (
+                                <option key={barber.id} value={barber.id}>
+                                    {barber.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
                     {/* Usluga */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -104,6 +126,13 @@ const EditAppointmentModal = ({
                             ))}
                         </select>
                     </div>
+
+                    {/* Poruka o grešci */}
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                            {error}
+                        </div>
+                    )}
 
                     {/* Dugmad */}
                     <div className="flex gap-3 pt-2">

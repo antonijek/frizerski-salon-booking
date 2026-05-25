@@ -12,6 +12,14 @@ const barberService = {
     },
 
     /**
+     * Dohvati sve aktivne frizere (alias za getAll)
+     */
+    async getActive() {
+        const response = await request.get(API_URL);
+        return response.data;
+    },
+
+    /**
      * Dohvati sve frizere (admin)
      */
     async getAllAdmin() {
@@ -32,6 +40,22 @@ const barberService = {
      */
     async update(id, data) {
         const response = await request.put(`${API_URL}/${id}`, data);
+        return response.data;
+    },
+
+    /**
+     * Upload slike frizera (admin)
+     */
+    async uploadImage(file) {
+        const formData = new FormData();
+        formData.append("image", file);
+        const response = await request.post(
+            `${API_URL}/upload-image`,
+            formData,
+            {
+                headers: { "Content-Type": "multipart/form-data" },
+            },
+        );
         return response.data;
     },
 

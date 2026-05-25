@@ -8,6 +8,7 @@ const db = mysql.createConnection({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     charset: "utf8mb4",
+    timezone: "+02:00",
 });
 
 db.connect((err) => {

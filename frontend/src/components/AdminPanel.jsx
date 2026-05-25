@@ -5,6 +5,7 @@ import ServicesTab from "./admin/ServicesTab";
 import BarbersTab from "./admin/BarbersTab";
 import UsersTab from "./admin/UsersTab";
 import StatsTab from "./admin/StatsTab";
+import GalleryTab from "./admin/GalleryTab";
 
 // ============================================
 // AdminPanel - Administratorski panel
@@ -94,6 +95,16 @@ const AdminPanel = ({ onNavigate }) => {
                 >
                     📊 Statistika
                 </button>
+                <button
+                    onClick={() => setActiveTab("gallery")}
+                    className={`px-4 py-2 rounded-t-lg text-sm font-medium transition ${
+                        activeTab === "gallery"
+                            ? "bg-amber-600 text-white"
+                            : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                >
+                    🖼️ Galerija
+                </button>
             </div>
 
             {/* Sadržaj tabova */}
@@ -102,6 +113,7 @@ const AdminPanel = ({ onNavigate }) => {
             {activeTab === "barbers" && <BarbersTab />}
             {activeTab === "users" && <UsersTab />}
             {activeTab === "stats" && <StatsTab />}
+            {activeTab === "gallery" && <GalleryTab />}
         </div>
     );
 };

@@ -25,6 +25,11 @@ requestInstance.interceptors.request.use(
             config.headers.Authorization = `Bearer ${token}`;
         }
 
+        // Ako šaljemo FormData, obriši Content-Type da axios sam postavi multipart/form-data
+        if (config.data instanceof FormData) {
+            delete config.headers["Content-Type"];
+        }
+
         console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
         return config;
     },

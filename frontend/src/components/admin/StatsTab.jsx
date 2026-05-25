@@ -2,27 +2,58 @@ import { useState, useEffect, useCallback } from "react";
 import appointmentService from "../../services/appointmentService";
 import LoadingSpinner from "../common/LoadingSpinner";
 
+const periodOptions = [
+    { key: "all", label: "Sve vreme" },
+    { key: "week", label: "Poslednja sedmica" },
+    { key: "month", label: "Poslednji mesec" },
+    { key: "year", label: "Poslednja godina" },
+    { key: "custom", label: "Odredjen datum" },
+];
+
 const StatsTab = () => {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [period, setPeriod] = useState("all");
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
-    const fetchStats = useCallback(async () => {
-        setLoading(true);
-        setError("");
-        try {
-            const data = await appointmentService.getStats();
-            setStats(data);
-        } catch (err) {
-            setError(err.error || "Greška pri učitavanju statistike");
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    const fetchStats = useCallback(
+        async (customPeriod, customStart, customEnd) => {
+            setLoading(true);
+            setError("");
+            try {
+                const effectivePeriod = customPeriod || period;
+                const sDate = customStart || startDate;
+                const eDate = customEnd || endDate;
+                const filters = { period: effectivePeriod };
+                if (effectivePeriod === "custom") {
+                    if (!sDate || !eDate) {
+                        setError("Izaberite početni i krajnji datum");
+                        setLoading(false);
+                        return;
+                    }
+                    filters.start_date = sDate;
+                    filters.end_date = eDate;
+                }
+                console.log("[StatsTab] fetchStats:", filters);
+                const data = await appointmentService.getStats(filters);
+                console.log("[StatsTab] data:", data);
+                setStats(data);
+            } catch (err) {
+                console.error("[StatsTab] error:", err);
+                setError(err.error || "Greška pri učitavanju statistike");
+            } finally {
+                setLoading(false);
+            }
+        },
+        [period, startDate, endDate],
+    );
 
+    // Učitaj podatke na početku (samo jednom)
     useEffect(() => {
         fetchStats();
-    }, [fetchStats]);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (loading) return <LoadingSpinner message="Učitavanje statistike..." />;
 
@@ -133,6 +164,71 @@ const StatsTab = () => {
                     🔄 Osveži
                 </button>
             </div>
+
+            {/* Filteri za period */}
+            <div className="flex flex-wrap gap-2 mb-6">
+                {periodOptions.map((opt) => (
+                    <button
+                        key={opt.key}
+                        onClick={() => {
+                            setPeriod(opt.key);
+                            if (opt.key !== "custom") {
+                                fetchStats(opt.key);
+                            }
+                        }}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                            period === opt.key
+                                ? "bg-amber-600 text-white"
+                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                    >
+                        {opt.label}
+                    </button>
+                ))}
+            </div>
+
+            {period === "custom" && (
+                <div className="flex flex-wrap gap-3 mb-6 items-end">
+                    <div>
+                        <label className="block text-xs text-gray-500 mb-1">
+                            Od datuma
+                        </label>
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs text-gray-500 mb-1">
+                            Do datuma
+                        </label>
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                        />
+                    </div>
+                    <button
+                        onClick={() => {
+                            console.log(
+                                "[StatsTab] Prikaži kliknut, period:",
+                                period,
+                                "startDate:",
+                                startDate,
+                                "endDate:",
+                                endDate,
+                            );
+                            fetchStats();
+                        }}
+                        className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition text-sm"
+                    >
+                        Prikaži
+                    </button>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {statCards.map((card, index) => (

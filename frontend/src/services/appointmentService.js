@@ -150,11 +150,29 @@ const appointmentService = {
 
     /**
      * Dohvati statistiku (samo admin)
+     * @param {Object} [filters] - Filteri za statistiku
+     * @param {string} [filters.period] - "all" | "week" | "month" | "year" | "custom"
+     * @param {string} [filters.start_date] - YYYY-MM-DD (obavezno za custom)
+     * @param {string} [filters.end_date] - YYYY-MM-DD (obavezno za custom)
      * @returns {Promise<Object>} Statistički podaci
      */
-    getStats: async () => {
+    getStats: async (filters = {}) => {
         try {
-            const response = await requestInstance.get("/appointments/stats");
+            const params = new URLSearchParams();
+            if (filters.period && filters.period !== "all") {
+                params.append("period", filters.period);
+            }
+            if (filters.start_date) {
+                params.append("start_date", filters.start_date);
+            }
+            if (filters.end_date) {
+                params.append("end_date", filters.end_date);
+            }
+            const queryString = params.toString();
+            const url = queryString
+                ? `/appointments/stats?${queryString}`
+                : "/appointments/stats";
+            const response = await requestInstance.get(url);
             return response.data;
         } catch (error) {
             throw (

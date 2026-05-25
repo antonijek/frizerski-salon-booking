@@ -14,69 +14,129 @@ const {
 
 /**
  * GET /api/appointments/stats - Dohvati statistiku
+ * Query parametri:
+ *   period: "all" | "week" | "month" | "year" | "custom" (default: "all")
+ *   start_date: YYYY-MM-DD (obavezno za custom)
+ *   end_date: YYYY-MM-DD (obavezno za custom)
  */
 router.get("/stats", authenticate, isAdmin, (req, res) => {
+    const { period = "all", start_date, end_date } = req.query;
     const stats = {};
 
-    // Ukupan broj termina
-    db.query("SELECT COUNT(*) as total FROM appointments", (err, results) => {
+    // Izračunaj WHERE uslov za filter
+    let dateFilter = "";
+    let dateParams = [];
+    if (period === "week") {
+        // Tekuća sedmica: od ponedeljka do nedelje
+        dateFilter =
+            "WHERE a.date >= DATE_SUB(DATE_FORMAT(NOW(), '%Y-%m-%d'), INTERVAL WEEKDAY(NOW()) DAY) AND a.date <= DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d'), INTERVAL (6 - WEEKDAY(NOW())) DAY)";
+    } else if (period === "month") {
+        // Tekući mesec: od 1. do kraja meseca
+        dateFilter =
+            "WHERE a.date >= DATE_FORMAT(NOW(), '%Y-%m-01') AND a.date <= LAST_DAY(DATE_FORMAT(NOW(), '%Y-%m-%d'))";
+    } else if (period === "year") {
+        // Tekuća godina: od 1. januara do 31. decembra
+        dateFilter =
+            "WHERE a.date >= DATE_FORMAT(NOW(), '%Y-01-01') AND a.date <= DATE_FORMAT(NOW(), '%Y-12-31')";
+    } else if (period === "custom" && start_date && end_date) {
+        dateFilter = "WHERE a.date >= ? AND a.date <= ?";
+        dateParams = [start_date, end_date];
+    }
+
+    // Helper za dodavanje WHERE uslova u upite
+    const withDateFilter = (baseWhere) => {
+        if (period === "all") return baseWhere;
+        if (period === "custom" && start_date && end_date) {
+            return baseWhere
+                ? `${baseWhere} AND a.date >= ? AND a.date <= ?`
+                : "WHERE a.date >= ? AND a.date <= ?";
+        }
+        const map = {
+            week: "WHERE a.date >= DATE_SUB(DATE_FORMAT(NOW(), '%Y-%m-%d'), INTERVAL WEEKDAY(NOW()) DAY) AND a.date <= DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d'), INTERVAL (6 - WEEKDAY(NOW())) DAY)",
+            month: "WHERE a.date >= DATE_FORMAT(NOW(), '%Y-%m-01') AND a.date <= LAST_DAY(DATE_FORMAT(NOW(), '%Y-%m-%d'))",
+            year: "WHERE a.date >= DATE_FORMAT(NOW(), '%Y-01-01') AND a.date <= DATE_FORMAT(NOW(), '%Y-12-31')",
+        };
+        return map[period] || "";
+    };
+
+    // Helper za WHERE za tabele koje nemaju alias "a"
+    const withDateFilterNoAlias = (baseWhere) => {
+        if (period === "all") return baseWhere;
+        if (period === "custom" && start_date && end_date) {
+            return baseWhere
+                ? `${baseWhere} AND date >= ? AND date <= ?`
+                : "WHERE date >= ? AND date <= ?";
+        }
+        const map = {
+            week: "WHERE date >= DATE_SUB(DATE_FORMAT(NOW(), '%Y-%m-%d'), INTERVAL WEEKDAY(NOW()) DAY) AND date <= DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-%d'), INTERVAL (6 - WEEKDAY(NOW())) DAY)",
+            month: "WHERE date >= DATE_FORMAT(NOW(), '%Y-%m-01') AND date <= LAST_DAY(DATE_FORMAT(NOW(), '%Y-%m-%d'))",
+            year: "WHERE date >= DATE_FORMAT(NOW(), '%Y-01-01') AND date <= DATE_FORMAT(NOW(), '%Y-12-31')",
+        };
+        return map[period] || "";
+    };
+
+    // Ukupan broj termina (u periodu)
+    const totalSql = `SELECT COUNT(*) as total FROM appointments a ${withDateFilter("")}`;
+    db.query(totalSql, dateParams, (err, results) => {
         if (err) return res.status(500).json({ error: "Greška na serveru" });
         stats.totalAppointments = results[0].total;
 
-        // Termini po uslugama
-        db.query(
-            "SELECT service, COUNT(*) as count FROM appointments GROUP BY service ORDER BY count DESC",
-            (err, results) => {
+        // Termini po uslugama (u periodu)
+        const byServiceSql = `SELECT a.service, COUNT(*) as count FROM appointments a ${withDateFilter("")} GROUP BY a.service ORDER BY count DESC`;
+        db.query(byServiceSql, dateParams, (err, results) => {
+            if (err)
+                return res.status(500).json({ error: "Greška na serveru" });
+            stats.appointmentsByService = results;
+
+            // Termini po frizerima (u periodu)
+            const byBarberSql = `SELECT b.name, COUNT(a.id) as count FROM appointments a RIGHT JOIN barbers b ON a.barber_id = b.id ${withDateFilter("")} GROUP BY b.id, b.name ORDER BY count DESC`;
+            db.query(byBarberSql, dateParams, (err, results) => {
                 if (err)
                     return res.status(500).json({ error: "Greška na serveru" });
-                stats.appointmentsByService = results;
+                stats.appointmentsByBarber = results;
 
-                // Termini po frizerima
-                db.query(
-                    `SELECT b.name, COUNT(a.id) as count 
-                         FROM appointments a 
-                         RIGHT JOIN barbers b ON a.barber_id = b.id 
-                         GROUP BY b.id, b.name 
-                         ORDER BY count DESC`,
-                    (err, results) => {
+                // Mesečna statistika (u periodu)
+                const monthlySql = `SELECT DATE_FORMAT(a.date, '%Y-%m') as month, COUNT(*) as count FROM appointments a ${withDateFilter("")} GROUP BY DATE_FORMAT(a.date, '%Y-%m') ORDER BY month`;
+                db.query(monthlySql, dateParams, (err, results) => {
+                    if (err)
+                        return res
+                            .status(500)
+                            .json({ error: "Greška na serveru" });
+                    stats.monthlyStats = results;
+
+                    // Prihod po mesecima (u periodu)
+                    const revenueSql = `SELECT DATE_FORMAT(a.date, '%Y-%m') as month, COALESCE(SUM(s.price), 0) as revenue FROM appointments a LEFT JOIN services s ON a.service = s.name ${withDateFilter("")} GROUP BY DATE_FORMAT(a.date, '%Y-%m') ORDER BY month`;
+                    db.query(revenueSql, dateParams, (err, results) => {
                         if (err)
                             return res
                                 .status(500)
                                 .json({ error: "Greška na serveru" });
-                        stats.appointmentsByBarber = results;
+                        stats.monthlyRevenue = results;
 
-                        // Mesečna statistika (poslednjih 12 meseci)
+                        // Broj korisnika (uvek ukupno, nezavisno od filtera)
                         db.query(
-                            `SELECT DATE_FORMAT(date, '%Y-%m') as month, COUNT(*) as count 
-                                 FROM appointments 
-                                 WHERE date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) 
-                                 GROUP BY DATE_FORMAT(date, '%Y-%m') 
-                                 ORDER BY month`,
+                            "SELECT COUNT(*) as total FROM users",
                             (err, results) => {
                                 if (err)
                                     return res
                                         .status(500)
                                         .json({ error: "Greška na serveru" });
-                                stats.monthlyStats = results;
+                                stats.totalUsers = results[0].total;
 
-                                // Prihod po mesecima
+                                // Današnji termini (uvek danas)
                                 db.query(
-                                    `SELECT DATE_FORMAT(a.date, '%Y-%m') as month, SUM(s.price) as revenue
-                                         FROM appointments a 
-                                         LEFT JOIN services s ON a.service = s.name 
-                                         WHERE a.date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) 
-                                         GROUP BY DATE_FORMAT(a.date, '%Y-%m') 
-                                         ORDER BY month`,
+                                    "SELECT COUNT(*) as count FROM appointments WHERE date = DATE_FORMAT(NOW(), '%Y-%m-%d')",
                                     (err, results) => {
                                         if (err)
                                             return res.status(500).json({
                                                 error: "Greška na serveru",
                                             });
-                                        stats.monthlyRevenue = results;
+                                        stats.todayAppointments =
+                                            results[0].count;
 
-                                        // Broj korisnika
+                                        // Broj aktivnih usluga (uvek ukupno)
                                         db.query(
-                                            "SELECT COUNT(*) as total FROM users",
+                                            "SELECT COUNT(*) as total FROM services",
                                             (err, results) => {
                                                 if (err)
                                                     return res
@@ -84,12 +144,12 @@ router.get("/stats", authenticate, isAdmin, (req, res) => {
                                                         .json({
                                                             error: "Greška na serveru",
                                                         });
-                                                stats.totalUsers =
+                                                stats.totalServices =
                                                     results[0].total;
 
-                                                // Današnji termini
+                                                // Broj aktivnih frizera (uvek ukupno)
                                                 db.query(
-                                                    "SELECT COUNT(*) as count FROM appointments WHERE date = CURDATE()",
+                                                    "SELECT COUNT(*) as total FROM barbers WHERE is_active = 1",
                                                     (err, results) => {
                                                         if (err)
                                                             return res
@@ -97,13 +157,14 @@ router.get("/stats", authenticate, isAdmin, (req, res) => {
                                                                 .json({
                                                                     error: "Greška na serveru",
                                                                 });
-                                                        stats.todayAppointments =
-                                                            results[0].count;
+                                                        stats.totalBarbers =
+                                                            results[0].total;
 
-                                                        // Broj aktivnih usluga
+                                                        // Ukupna zarada (u periodu)
+                                                        const revenueTotalSql = `SELECT COALESCE(SUM(s.price), 0) as total FROM appointments a LEFT JOIN services s ON a.service = s.name ${withDateFilter("")}`;
                                                         db.query(
-                                                            "SELECT COUNT(*) as total FROM services",
-
+                                                            revenueTotalSql,
+                                                            dateParams,
                                                             (err, results) => {
                                                                 if (err)
                                                                     return res
@@ -113,60 +174,10 @@ router.get("/stats", authenticate, isAdmin, (req, res) => {
                                                                         .json({
                                                                             error: "Greška na serveru",
                                                                         });
-                                                                stats.totalServices =
+                                                                stats.totalRevenue =
                                                                     results[0].total;
 
-                                                                // Broj aktivnih frizera
-                                                                db.query(
-                                                                    "SELECT COUNT(*) as total FROM barbers WHERE is_active = 1",
-                                                                    (
-                                                                        err,
-                                                                        results,
-                                                                    ) => {
-                                                                        if (err)
-                                                                            return res
-                                                                                .status(
-                                                                                    500,
-                                                                                )
-                                                                                .json(
-                                                                                    {
-                                                                                        error: "Greška na serveru",
-                                                                                    },
-                                                                                );
-                                                                        stats.totalBarbers =
-                                                                            results[0].total;
-
-                                                                        // Ukupna zarada
-                                                                        db.query(
-                                                                            `SELECT COALESCE(SUM(s.price), 0) as total
-                                                                             FROM appointments a
-                                                                             LEFT JOIN services s ON a.service = s.name`,
-                                                                            (
-                                                                                err,
-                                                                                results,
-                                                                            ) => {
-                                                                                if (
-                                                                                    err
-                                                                                )
-                                                                                    return res
-                                                                                        .status(
-                                                                                            500,
-                                                                                        )
-                                                                                        .json(
-                                                                                            {
-                                                                                                error: "Greška na serveru",
-                                                                                            },
-                                                                                        );
-                                                                                stats.totalRevenue =
-                                                                                    results[0].total;
-
-                                                                                res.json(
-                                                                                    stats,
-                                                                                );
-                                                                            },
-                                                                        );
-                                                                    },
-                                                                );
+                                                                res.json(stats);
                                                             },
                                                         );
                                                     },
@@ -177,10 +188,10 @@ router.get("/stats", authenticate, isAdmin, (req, res) => {
                                 );
                             },
                         );
-                    },
-                );
-            },
-        );
+                    });
+                });
+            });
+        });
     });
 });
 
@@ -491,43 +502,246 @@ router.post("/", (req, res) => {
 // Izmeni termin
 router.put("/:id", (req, res) => {
     const { id } = req.params;
-    const { name, phone, email, date, time, service } = req.body;
+    const { name, phone, email, date, time, service, barber_id } = req.body;
 
     if (!name || !phone || !date || !time || !service) {
         return res.status(400).json({ error: "Sva polja su obavezna" });
     }
 
-    // Proveri da li je novi termin vec zauzet (osim ako je isti termin)
-    const checkSql =
-        "SELECT * FROM appointments WHERE date = ? AND time = ? AND id != ?";
-    db.query(checkSql, [date, time, id], (err, results) => {
+    // Prvo dohvati postojeći termin da vidimo trenutnog frizera
+    const getExistingSql = "SELECT barber_id FROM appointments WHERE id = ?";
+    db.query(getExistingSql, [id], (err, existingResults) => {
         if (err) {
-            console.error("Greška pri proveri termina:", err);
+            console.error("Greška pri dohvatanju termina:", err);
             return res.status(500).json({ error: "Greška na serveru" });
         }
-
-        if (results.length > 0) {
-            return res.status(409).json({ error: "Termin je već zauzet" });
+        if (existingResults.length === 0) {
+            return res.status(404).json({ error: "Termin nije pronadjen" });
         }
 
-        const sql =
-            "UPDATE appointments SET name = ?, phone = ?, email = ?, date = ?, time = ?, service = ? WHERE id = ?";
-        db.query(
-            sql,
-            [name, phone, email, date, time, service, id],
-            (err, result) => {
+        const existingBarberId = existingResults[0].barber_id;
+
+        // Odredi koji barber_id će se koristiti:
+        // - Ako je barber_id prazan string ili null, zadrži postojećeg frizera
+        // - Ako je barber_id poslat (broj), koristi taj
+        const finalBarberId = barber_id ? barber_id : existingBarberId;
+
+        // Ako je dodeljen frizer, proveri da li radi u to vreme i da li je slobodan
+        if (finalBarberId) {
+            // Prvo proveri radno vreme frizera
+            const barberSql =
+                "SELECT work_start, work_end, work_days FROM barbers WHERE id = ?";
+            db.query(barberSql, [finalBarberId], (err, barberResults) => {
                 if (err) {
-                    console.error("Greška pri izmeni termina:", err);
+                    console.error("Greška pri dohvatanju frizera:", err);
                     return res.status(500).json({ error: "Greška na serveru" });
                 }
-                if (result.affectedRows === 0) {
-                    return res
-                        .status(404)
-                        .json({ error: "Termin nije pronadjen" });
+
+                if (barberResults.length > 0) {
+                    const barber = barberResults[0];
+
+                    // Proveri radni dan
+                    const dateObj = new Date(date + "T00:00:00");
+                    const dayOfWeek = dateObj.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+                    const dbDay = dayOfWeek === 0 ? 7 : dayOfWeek;
+
+                    if (barber.work_days) {
+                        const workDays = barber.work_days
+                            .split(",")
+                            .map((d) => d.trim());
+                        if (!workDays.includes(dbDay.toString())) {
+                            return res.status(409).json({
+                                error: "Izabrani frizer ne radi na taj dan. Promenite frizera ili izaberite drugi datum.",
+                            });
+                        }
+                    }
+
+                    // Proveri radno vreme
+                    if (barber.work_start && barber.work_end) {
+                        const [sH, sM] = barber.work_start
+                            .split(":")
+                            .map(Number);
+                        const [eH, eM] = barber.work_end.split(":").map(Number);
+                        const barberStart = sH * 60 + sM;
+                        const barberEnd = eH * 60 + eM;
+
+                        const [newHour, newMinute] = time
+                            .split(":")
+                            .map(Number);
+                        const newStartMinutes = newHour * 60 + newMinute;
+
+                        // Dohvati trajanje usluge za proveru kraja
+                        const durationSql =
+                            "SELECT duration FROM services WHERE name = ?";
+                        db.query(durationSql, [service], (err, durResults) => {
+                            if (err) {
+                                console.error(
+                                    "Greška pri dohvatanju trajanja:",
+                                    err,
+                                );
+                                return res.status(500).json({
+                                    error: "Greška na serveru",
+                                });
+                            }
+                            const serviceDuration =
+                                durResults.length > 0
+                                    ? durResults[0].duration
+                                    : 60;
+                            const newEndMinutes =
+                                newStartMinutes + serviceDuration;
+
+                            if (
+                                newStartMinutes < barberStart ||
+                                newEndMinutes > barberEnd
+                            ) {
+                                return res.status(409).json({
+                                    error: `Izabrani frizer ne radi u to vreme (radno vreme: ${barber.work_start} - ${barber.work_end}). Promenite frizera ili izaberite drugo vreme.`,
+                                });
+                            }
+
+                            // Proveri da li ima preklapanje sa drugim terminima
+                            checkBarberOverlap(
+                                finalBarberId,
+                                date,
+                                time,
+                                service,
+                                id,
+                                newStartMinutes,
+                                newEndMinutes,
+                            );
+                        });
+                    } else {
+                        // Nema radno vreme - samo proveri preklapanje
+                        checkBarberOverlap(
+                            finalBarberId,
+                            date,
+                            time,
+                            service,
+                            id,
+                        );
+                    }
+                } else {
+                    // Frizer ne postoji - nastavi bez provere
+                    updateAppointment(finalBarberId);
                 }
-                res.json({ message: "Termin uspešno izmenjen" });
-            },
-        );
+            });
+        } else {
+            updateAppointment(null);
+        }
+
+        function checkBarberOverlap(
+            barberId,
+            date,
+            time,
+            service,
+            appointmentId,
+            newStartMinutes,
+            newEndMinutes,
+        ) {
+            const checkBarberSql = `
+                SELECT a.time, s.duration 
+                FROM appointments a 
+                LEFT JOIN services s ON a.service = s.name 
+                WHERE a.date = ? AND a.barber_id = ? AND a.id != ?
+            `;
+            db.query(
+                checkBarberSql,
+                [date, barberId, appointmentId],
+                (err, barberApps) => {
+                    if (err) {
+                        console.error("Greška pri proveri frizera:", err);
+                        return res
+                            .status(500)
+                            .json({ error: "Greška na serveru" });
+                    }
+
+                    // Ako nismo izračunali vreme, izračunaj sad
+                    if (!newStartMinutes || !newEndMinutes) {
+                        const [newHour, newMinute] = time
+                            .split(":")
+                            .map(Number);
+                        newStartMinutes = newHour * 60 + newMinute;
+
+                        const durationSql =
+                            "SELECT duration FROM services WHERE name = ?";
+                        db.query(durationSql, [service], (err, durResults) => {
+                            if (err) {
+                                console.error(
+                                    "Greška pri dohvatanju trajanja:",
+                                    err,
+                                );
+                                return res
+                                    .status(500)
+                                    .json({ error: "Greška na serveru" });
+                            }
+                            const serviceDuration =
+                                durResults.length > 0
+                                    ? durResults[0].duration
+                                    : 60;
+                            newEndMinutes = newStartMinutes + serviceDuration;
+                            checkOverlap(
+                                barberApps,
+                                newStartMinutes,
+                                newEndMinutes,
+                                barberId,
+                            );
+                        });
+                    } else {
+                        checkOverlap(
+                            barberApps,
+                            newStartMinutes,
+                            newEndMinutes,
+                            barberId,
+                        );
+                    }
+                },
+            );
+        }
+
+        function checkOverlap(
+            barberApps,
+            newStartMinutes,
+            newEndMinutes,
+            barberId,
+        ) {
+            const hasOverlap = barberApps.some((app) => {
+                const [eH, eM] = app.time.split(":").map(Number);
+                const existStart = eH * 60 + eM;
+                const existEnd = existStart + (app.duration || 60);
+                return newStartMinutes < existEnd && newEndMinutes > existStart;
+            });
+
+            if (hasOverlap) {
+                return res.status(409).json({
+                    error: "Frizer je zauzet u tom terminu. Proverite trajanje usluge ili izaberite drugo vreme.",
+                });
+            }
+
+            updateAppointment(barberId);
+        }
+
+        function updateAppointment(assignedBarberId) {
+            const sql =
+                "UPDATE appointments SET name = ?, phone = ?, email = ?, date = ?, time = ?, service = ?, barber_id = ? WHERE id = ?";
+            db.query(
+                sql,
+                [name, phone, email, date, time, service, assignedBarberId, id],
+                (err, result) => {
+                    if (err) {
+                        console.error("Greška pri izmeni termina:", err);
+                        return res
+                            .status(500)
+                            .json({ error: "Greška na serveru" });
+                    }
+                    if (result.affectedRows === 0) {
+                        return res
+                            .status(404)
+                            .json({ error: "Termin nije pronadjen" });
+                    }
+                    res.json({ message: "Termin uspešno izmenjen" });
+                },
+            );
+        }
     });
 });
 

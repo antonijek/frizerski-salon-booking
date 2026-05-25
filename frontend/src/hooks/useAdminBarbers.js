@@ -10,19 +10,23 @@ const useAdminBarbers = () => {
     const [editingBarber, setEditingBarber] = useState(null);
     const [form, setForm] = useState({
         name: "",
+        image_url: "",
+        title: "",
+        bio: "",
         work_days: "1,2,3,4,5,6",
         work_start: "09:00",
         work_end: "17:00",
         is_active: true,
     });
     const [saving, setSaving] = useState(false);
+    const [uploadingImage, setUploadingImage] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(null);
 
     const fetchBarbers = useCallback(async () => {
         setLoading(true);
         setError("");
         try {
-            const data = await barberService.getAll();
+            const data = await barberService.getAllAdmin();
             setBarbers(data);
         } catch (err) {
             setError(err.error || "Greška pri učitavanju frizera");
@@ -44,6 +48,9 @@ const useAdminBarbers = () => {
         setEditingBarber(null);
         setForm({
             name: "",
+            image_url: "",
+            title: "",
+            bio: "",
             work_days: "1,2,3,4,5,6",
             work_start: "09:00",
             work_end: "17:00",
@@ -56,6 +63,9 @@ const useAdminBarbers = () => {
         setEditingBarber(barber);
         setForm({
             name: barber.name,
+            image_url: barber.image_url || "",
+            title: barber.title || "",
+            bio: barber.bio || "",
             work_days: barber.work_days || "1,2,3,4,5,6",
             work_start: barber.work_start || "09:00",
             work_end: barber.work_end || "17:00",
@@ -90,6 +100,9 @@ const useAdminBarbers = () => {
         try {
             const data = {
                 name: form.name.trim(),
+                image_url: form.image_url || null,
+                title: form.title || null,
+                bio: form.bio || null,
                 work_days: form.work_days,
                 work_start: form.work_start,
                 work_end: form.work_end,
@@ -125,6 +138,7 @@ const useAdminBarbers = () => {
     const handleToggleActive = async (barber) => {
         try {
             await barberService.update(barber.id, {
+                name: barber.name,
                 is_active: !(
                     barber.is_active === 1 || barber.is_active === true
                 ),
@@ -132,6 +146,20 @@ const useAdminBarbers = () => {
             fetchBarbers();
         } catch (err) {
             setError(err.error || "Greška pri promeni statusa");
+        }
+    };
+
+    const handleImageUpload = async (file) => {
+        if (!file) return;
+        setUploadingImage(true);
+        setError("");
+        try {
+            const result = await barberService.uploadImage(file);
+            setForm((prev) => ({ ...prev, image_url: result.image_url }));
+        } catch (err) {
+            setError(err.error || "Greška pri uploadu slike");
+        } finally {
+            setUploadingImage(false);
         }
     };
 
@@ -147,6 +175,7 @@ const useAdminBarbers = () => {
         form,
         setForm,
         saving,
+        uploadingImage,
         confirmDelete,
         openCreateForm,
         openEditForm,
@@ -156,6 +185,7 @@ const useAdminBarbers = () => {
         handleDelete,
         setConfirmDelete,
         handleToggleActive,
+        handleImageUpload,
         fetchBarbers,
         clearError,
     };
