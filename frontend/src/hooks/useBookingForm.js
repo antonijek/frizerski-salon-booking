@@ -50,6 +50,7 @@ const useBookingForm = () => {
         date: [{ required: true, message: "Datum je obavezan" }],
         time: [{ required: true, message: "Vreme je obavezno" }],
         service: [{ required: true, message: "Usluga je obavezna" }],
+        barber_id: [{ required: true, message: "Izaberite frizera" }],
     };
 
     const {

@@ -279,7 +279,7 @@ router.get("/phone/:phone", (req, res) => {
 router.post("/", (req, res) => {
     const { name, phone, email, date, time, service, barber_id } = req.body;
 
-    if (!name || !phone || !date || !time || !service) {
+    if (!name || !phone || !date || !time || !service || !barber_id) {
         return res.status(400).json({ error: "Sva polja su obavezna" });
     }
 
