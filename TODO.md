@@ -49,3 +49,30 @@ Ili, ako želiš još jednostavnije - samo pokreneš deploy skriptu koju smo nap
 ```bash
 cd /var/www/html && bash deploy.sh
 ```
+
+---
+
+## Sinhronizacija baze (lokalno → server)
+
+Kad želiš da podaci na serveru budu identični kao lokalni (barberi, usluge, appointmenti, galerija):
+
+### Opcija 1: Preko phpMyAdmin-a (lakše)
+
+1. **Lokalno** - Otvori http://localhost/phpmyadmin, izaberi bazu `frizerski_salon`, klikni **Export** → **SQL** → **Go**. Sačuvaj `.sql` fajl.
+2. **Server** - Otvori http://213.199.32.240/phpmyadmin, izaberi bazu `frizerski_salon`, klikni **Import**, izaberi taj `.sql` fajl, klikni **Go**.
+
+### Opcija 2: Preko komandne linije (brže)
+
+```bash
+# 1. Lokalno - napravi dump baze
+mysqldump -u root -p frizerski_salon > db-backup.sql
+
+# 2. Pošalji na server
+scp db-backup.sql root@213.199.32.240:/root/
+
+# 3. Na serveru - importuj
+ssh root@213.199.32.240
+mysql -u root -p frizerski_salon < /root/db-backup.sql
+```
+
+**⚠️ VAŽNO:** Ovo će **zameniti** sve podatke na serveru podacima iz lokalne baze. Ako ima appointmenta na serveru koji nisu lokalno, biće izgubljeni.
