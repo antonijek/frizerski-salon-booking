@@ -67,6 +67,7 @@ const salonConfig = {
     navigation: [
         { label: "Početna", path: "/", icon: "🏠" },
         { label: "Usluge", path: "/usluge", icon: "✂️" },
+        { label: "Frizeri", path: "/tim", icon: "🧔" },
         { label: "Zakaži", path: "/zakazi", icon: "📅" },
         { label: "Moj profil", path: "/moj-profil", icon: "👤" },
         { label: "Kontakt", path: "/kontakt", icon: "📞" },

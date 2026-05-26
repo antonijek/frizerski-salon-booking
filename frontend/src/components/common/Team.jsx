@@ -7,6 +7,34 @@ import barberService from "../../services/barberService";
 // Team - Sekcija za prikaz tima frizera
 // ============================================
 
+// Mapa dana: 1=Pon, 2=Uto, ..., 7=Ned
+const DAY_NAMES = {
+    1: "Pon",
+    2: "Uto",
+    3: "Sre",
+    4: "Čet",
+    5: "Pet",
+    6: "Sub",
+    7: "Ned",
+};
+
+const formatWorkDays = (workDaysStr) => {
+    if (!workDaysStr) return "";
+    const days = workDaysStr.split(",").map((d) => d.trim());
+    // Ako su svi dani, vrati "Svaki dan"
+    if (days.length === 7) return "Svaki dan";
+    // Ako je pon-pet
+    const allDays = ["1", "2", "3", "4", "5", "6", "7"];
+    if (
+        days.length === 5 &&
+        days.every((d) => ["1", "2", "3", "4", "5"].includes(d))
+    ) {
+        return "Pon - Pet";
+    }
+    // Inače prikaži skraćenice
+    return days.map((d) => DAY_NAMES[d] || d).join(", ");
+};
+
 const Team = () => {
     const { team } = salonConfig;
     const [barbers, setBarbers] = useState([]);
@@ -83,6 +111,29 @@ const Team = () => {
                             <p className="text-gray-500 text-sm leading-relaxed max-w-xs mx-auto">
                                 {barber.bio}
                             </p>
+                        )}
+
+                        {/* Radno vreme */}
+                        {(barber.work_start || barber.work_days) && (
+                            <div className="mt-4 space-y-1 text-sm text-gray-500">
+                                {barber.work_start && barber.work_end && (
+                                    <p className="flex items-center justify-center gap-1">
+                                        <span>🕐</span>
+                                        <span>
+                                            {barber.work_start} -{" "}
+                                            {barber.work_end}
+                                        </span>
+                                    </p>
+                                )}
+                                {barber.work_days && (
+                                    <p className="flex items-center justify-center gap-1">
+                                        <span>📅</span>
+                                        <span>
+                                            {formatWorkDays(barber.work_days)}
+                                        </span>
+                                    </p>
+                                )}
+                            </div>
                         )}
                     </div>
                 ))}
