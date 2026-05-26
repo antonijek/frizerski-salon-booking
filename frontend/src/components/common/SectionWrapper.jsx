@@ -14,18 +14,18 @@ const SectionWrapper = ({
         <section className={`${padding} ${background} ${className}`}>
             <div className="max-w-4xl mx-auto px-4">
                 {(title || subtitle) && (
-                    <div className="text-center mb-10">
+                    <div className="text-center mb-12">
                         {title && (
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-3">
                                 {title}
                             </h2>
                         )}
                         {subtitle && (
-                            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                            <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
                                 {subtitle}
                             </p>
                         )}
-                        <div className="mt-4 w-20 h-1 bg-amber-500 mx-auto rounded-full" />
+                        <div className="mt-4 w-20 h-1 bg-gradient-to-r from-amber-400 to-amber-600 mx-auto rounded-full" />
                     </div>
                 )}
                 {children}

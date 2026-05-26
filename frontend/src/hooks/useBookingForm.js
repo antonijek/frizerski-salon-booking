@@ -170,8 +170,40 @@ const useBookingForm = () => {
         [selectedBarber, workingHours, services, values.service],
     );
 
+    // Filtriraj slotove koji su prosli za danasnji dan
+    const filterPastSlots = useCallback(
+        (slots) => {
+            if (!values.date) return { slots, pastSlots: [] };
+
+            const todayStr = new Date().toISOString().split("T")[0];
+            if (values.date !== todayStr) return { slots, pastSlots: [] }; // samo za danas
+
+            const now = new Date();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            // Dodajemo 30 minuta buffer-a da ostane vremena za pripremu
+            const bufferMinutes = currentMinutes + 30;
+
+            const pastSlots = [];
+            const futureSlots = [];
+            slots.forEach((slot) => {
+                const [h, m] = slot.split(":").map(Number);
+                const slotMinutes = h * 60 + m;
+                if (slotMinutes < bufferMinutes) {
+                    pastSlots.push(slot);
+                } else {
+                    futureSlots.push(slot);
+                }
+            });
+
+            return { slots: futureSlots, pastSlots };
+        },
+        [values.date],
+    );
+
     const allTimeSlots = generateTimeSlots();
-    const timeSlots = filterSlotsByBarber(allTimeSlots);
+    const { slots: filteredPastSlots, pastSlots: computedPastSlots } =
+        filterPastSlots(allTimeSlots);
+    const timeSlots = filterSlotsByBarber(filteredPastSlots);
 
     // Proveri da li je datum radni dan za izabranog frizera
     // Ako nije izabran konkretan frizer, proveri da li iko radi na taj dan
@@ -356,8 +388,14 @@ const useBookingForm = () => {
 
         setLoading(true);
 
+        // Ako nije izabran frizer, posalji null umesto praznog stringa
+        const submitData = {
+            ...values,
+            barber_id: values.barber_id || null,
+        };
+
         try {
-            const result = await create(values);
+            const result = await create(submitData);
 
             if (result.success) {
                 showNotification("🎉 Termin uspešno zakazan!", "success");
@@ -374,14 +412,20 @@ const useBookingForm = () => {
         }
     };
 
-    // Datum limiti
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const minDate = tomorrow.toISOString().split("T")[0];
+    // Datum limiti - dozvoli zakazivanje od danas
+    const today = new Date();
+    const minDate = today.toISOString().split("T")[0];
 
     const maxDate = new Date();
     maxDate.setDate(maxDate.getDate() + booking.maxDaysAhead);
     const maxDateStr = maxDate.toISOString().split("T")[0];
+
+    // Inicijalizuj date na danas ako nije postavljen
+    useEffect(() => {
+        if (!values.date) {
+            handleChange({ target: { name: "date", value: minDate } });
+        }
+    }, []);
 
     return {
         // State
@@ -393,6 +437,7 @@ const useBookingForm = () => {
         selectedBarber,
         timeSlots,
         bookedTimes,
+        pastSlots: computedPastSlots,
         loading,
         showProfilePrompt,
         minDate,

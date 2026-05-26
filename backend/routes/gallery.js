@@ -4,7 +4,12 @@ const db = require("../db");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const sharp = require("sharp");
+let sharp = null;
+try {
+    sharp = require("sharp");
+} catch (e) {
+    console.log("Sharp nije dostupan - optimizacija slika preskočena");
+}
 const { authenticate } = require("../middleware/auth");
 
 // ============================================
@@ -95,64 +100,66 @@ router.post("/upload", authenticate, upload.single("image"), (req, res) => {
     // ============================================
     // Optimizacija slike sa Sharp-om (ne blokira odgovor)
     // ============================================
-    try {
-        const filePath = path.join(uploadDir, req.file.filename);
-        const ext = path.extname(req.file.filename).toLowerCase();
+    if (sharp) {
+        try {
+            const filePath = path.join(uploadDir, req.file.filename);
+            const ext = path.extname(req.file.filename).toLowerCase();
 
-        // Samo za JPG, PNG i WebP - GIF preskačemo
-        if (ext !== ".gif") {
-            let sharpInstance = sharp(filePath).resize({
-                width: 1200,
-                withoutEnlargement: true,
-            });
+            // Samo za JPG, PNG i WebP - GIF preskačemo
+            if (ext !== ".gif") {
+                let sharpInstance = sharp(filePath).resize({
+                    width: 1200,
+                    withoutEnlargement: true,
+                });
 
-            // Primeni odgovarajuću kompresiju na osnovu formata
-            if (ext === ".jpg" || ext === ".jpeg") {
-                sharpInstance = sharpInstance.jpeg({
-                    quality: 80,
-                    mozjpeg: true,
-                });
-            } else if (ext === ".png") {
-                sharpInstance = sharpInstance.png({
-                    quality: 80,
-                    compressionLevel: 9,
-                });
-            } else if (ext === ".webp") {
-                sharpInstance = sharpInstance.webp({ quality: 80 });
+                // Primeni odgovarajuću kompresiju na osnovu formata
+                if (ext === ".jpg" || ext === ".jpeg") {
+                    sharpInstance = sharpInstance.jpeg({
+                        quality: 80,
+                        mozjpeg: true,
+                    });
+                } else if (ext === ".png") {
+                    sharpInstance = sharpInstance.png({
+                        quality: 80,
+                        compressionLevel: 9,
+                    });
+                } else if (ext === ".webp") {
+                    sharpInstance = sharpInstance.webp({ quality: 80 });
+                }
+
+                const optimizedPath = filePath.replace(
+                    /\.[^.]+$/,
+                    "-optimized" + ext,
+                );
+
+                sharpInstance
+                    .toFile(optimizedPath)
+                    .then((info) => {
+                        // Zameni original optimizovanom slikom
+                        try {
+                            fs.renameSync(optimizedPath, filePath);
+                            console.log(
+                                `Slika optimizovana: ${req.file.filename} (${info.size} bajtova)`,
+                            );
+                        } catch (renameErr) {
+                            console.error(
+                                "Greška pri preimenovanju optimizovane slike:",
+                                renameErr,
+                            );
+                        }
+                    })
+                    .catch((err) => {
+                        console.error("Greška pri optimizaciji slike:", err);
+                        try {
+                            if (fs.existsSync(optimizedPath))
+                                fs.unlinkSync(optimizedPath);
+                        } catch (e) {}
+                    });
             }
-
-            const optimizedPath = filePath.replace(
-                /\.[^.]+$/,
-                "-optimized" + ext,
-            );
-
-            sharpInstance
-                .toFile(optimizedPath)
-                .then((info) => {
-                    // Zameni original optimizovanom slikom
-                    try {
-                        fs.renameSync(optimizedPath, filePath);
-                        console.log(
-                            `Slika optimizovana: ${req.file.filename} (${info.size} bajtova)`,
-                        );
-                    } catch (renameErr) {
-                        console.error(
-                            "Greška pri preimenovanju optimizovane slike:",
-                            renameErr,
-                        );
-                    }
-                })
-                .catch((err) => {
-                    console.error("Greška pri optimizaciji slike:", err);
-                    try {
-                        if (fs.existsSync(optimizedPath))
-                            fs.unlinkSync(optimizedPath);
-                    } catch (e) {}
-                });
+        } catch (sharpErr) {
+            // Ako Sharp baci grešku, samo logujemo - slika je već uploadovana
+            console.error("Sharp greška (ne utiče na upload):", sharpErr);
         }
-    } catch (sharpErr) {
-        // Ako Sharp baci grešku, samo logujemo - slika je već uploadovana
-        console.error("Sharp greška (ne utiče na upload):", sharpErr);
     }
 
     // Dohvati max sort_order da dodamo na kraj

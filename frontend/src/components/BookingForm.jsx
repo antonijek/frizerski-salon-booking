@@ -17,6 +17,7 @@ const BookingForm = ({ onNavigate }) => {
         selectedBarber,
         timeSlots,
         bookedTimes,
+        pastSlots,
         loading,
         showProfilePrompt,
         minDate,
@@ -91,6 +92,7 @@ const BookingForm = ({ onNavigate }) => {
                 <TimeSlotPicker
                     timeSlots={timeSlots}
                     bookedTimes={bookedTimes}
+                    pastSlots={pastSlots}
                     selectedTime={values.time}
                     onSelect={handleChange}
                     error={errors.time}

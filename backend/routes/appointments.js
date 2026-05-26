@@ -277,7 +277,9 @@ router.get("/phone/:phone", (req, res) => {
 
 // Kreiraj novi termin
 router.post("/", (req, res) => {
-    const { name, phone, email, date, time, service, barber_id } = req.body;
+    const { name, phone, email, date, time, service } = req.body;
+    // Konvertuj barber_id: prazan string -> null, tako da "bilo koji frizer" bude null
+    const barber_id = req.body.barber_id || null;
 
     if (!name || !phone || !date || !time || !service) {
         return res.status(400).json({ error: "Sva polja su obavezna" });
@@ -412,6 +414,13 @@ router.post("/", (req, res) => {
                 return res.status(500).json({ error: "Greška na serveru" });
             }
 
+            // Ako nije izabran frizer (bilo koji frizer) i nijedan nije slobodan
+            if (!barber_id && !assignedBarberId) {
+                return res.status(409).json({
+                    error: "Termin je već zauzet. Molimo provjerite trajanje usluge ili izaberite drugo vrijeme.",
+                });
+            }
+
             const finalBarberId = assignedBarberId || barber_id || null;
 
             // Proveri da li imamo preklapanje ako je izabran konkretan frizer
@@ -449,9 +458,9 @@ router.post("/", (req, res) => {
                         });
 
                         if (hasOverlap) {
-                            return res
-                                .status(409)
-                                .json({ error: "Termin je već zauzet" });
+                            return res.status(409).json({
+                                error: "Termin je već zauzet. Molimo provjerite trajanje usluge ili izaberite drugo vrijeme.",
+                            });
                         }
 
                         createAppointment(finalBarberId);
