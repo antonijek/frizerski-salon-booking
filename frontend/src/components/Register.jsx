@@ -104,13 +104,14 @@ const Register = ({ onNavigate }) => {
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Telefon
+                            Telefon *
                         </label>
                         <input
                             type="tel"
                             name="phone"
                             value={formData.phone}
                             onChange={handleChange}
+                            required
                             placeholder="+381 6X XXX XXXX"
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition"
                         />
