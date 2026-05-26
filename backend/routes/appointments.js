@@ -245,7 +245,7 @@ router.get("/phone/:phone", (req, res) => {
     // Uzmi poslednjih 6+ cifara za SQL pretragu (da nadje i formate sa pozivnim)
     const searchSuffix = cleanPhone.slice(-8);
     const sql =
-        "SELECT id, name, phone, email, DATE_FORMAT(date, '%Y-%m-%d') as date, time, service, created_at FROM appointments ORDER BY date DESC, time DESC";
+        "SELECT id, name, phone, email, DATE_FORMAT(date, '%Y-%m-%d') as date, time, service, barber_id, created_at FROM appointments ORDER BY date DESC, time DESC";
     db.query(sql, (err, results) => {
         if (err) {
             console.error("Greška pri dohvatanju termina:", err);
