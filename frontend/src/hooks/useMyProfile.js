@@ -365,6 +365,38 @@ const useMyProfile = () => {
             closeEditModal();
             fetchByPhone(phone);
         } else {
+            // Ako je greška zbog radnog vremena frizera i izabran je konkretan frizer,
+            // pitaj korisnika da li želi da proba sa "Bilo koji frizer"
+            if (
+                editForm.barber_id &&
+                (result.message?.includes("ne radi") ||
+                    result.message?.includes("radno vreme"))
+            ) {
+                const tryAnyBarber = window.confirm(
+                    "Izabrani frizer ne radi u to vreme. Da li želite da probate sa 'Bilo koji frizer'?",
+                );
+                if (tryAnyBarber) {
+                    setEditForm((prev) => ({ ...prev, barber_id: "" }));
+                    // Ponovo pošalji sa barber_id = ""
+                    setSaving(true);
+                    const retryResult = await update(editingAppointment.id, {
+                        ...editForm,
+                        barber_id: "",
+                    });
+                    setSaving(false);
+                    if (retryResult.success) {
+                        showNotification(
+                            "✅ Termin uspešno izmenjen!",
+                            "success",
+                        );
+                        closeEditModal();
+                        fetchByPhone(phone);
+                    } else {
+                        showNotification(retryResult.message, "error");
+                    }
+                    return;
+                }
+            }
             showNotification(result.message, "error");
         }
     };
