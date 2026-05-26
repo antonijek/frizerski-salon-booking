@@ -747,6 +747,19 @@ router.put("/:id", (req, res) => {
                             .status(404)
                             .json({ error: "Termin nije pronadjen" });
                     }
+
+                    // Posalji mejlove o izmeni termina
+                    const updatedAppointment = {
+                        name,
+                        phone,
+                        email,
+                        date,
+                        time,
+                        service,
+                    };
+                    sendSalonNotification(updatedAppointment);
+                    sendCustomerConfirmation(updatedAppointment);
+
                     res.json({ message: "Termin uspešno izmenjen" });
                 },
             );
