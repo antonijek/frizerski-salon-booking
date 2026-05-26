@@ -20,11 +20,20 @@ const DAY_NAMES = {
 
 const formatWorkDays = (workDaysStr) => {
     if (!workDaysStr) return "";
-    const days = workDaysStr.split(",").map((d) => d.trim());
+    const days = workDaysStr
+        .split(",")
+        .map((d) => d.trim())
+        .sort();
     // Ako su svi dani, vrati "Svaki dan"
     if (days.length === 7) return "Svaki dan";
-    // Ako je pon-pet
-    const allDays = ["1", "2", "3", "4", "5", "6", "7"];
+    // Ako je pon-sub (1-6)
+    if (
+        days.length === 6 &&
+        days.every((d) => ["1", "2", "3", "4", "5", "6"].includes(d))
+    ) {
+        return "Pon - Sub";
+    }
+    // Ako je pon-pet (1-5)
     if (
         days.length === 5 &&
         days.every((d) => ["1", "2", "3", "4", "5"].includes(d))
@@ -68,7 +77,10 @@ const Team = () => {
         >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {barbers.map((barber) => (
-                    <div key={barber.id} className="group text-center">
+                    <div
+                        key={barber.id}
+                        className="group text-center flex flex-col h-full"
+                    >
                         {/* Slika */}
                         <div className="relative w-48 h-48 mx-auto mb-6">
                             <div className="w-full h-full rounded-full overflow-hidden ring-4 ring-amber-100 group-hover:ring-amber-300 transition-all duration-300">
@@ -113,9 +125,9 @@ const Team = () => {
                             </p>
                         )}
 
-                        {/* Radno vreme */}
+                        {/* Radno vreme - mt-auto da bude u istom redu */}
                         {(barber.work_start || barber.work_days) && (
-                            <div className="mt-4 space-y-1 text-sm text-gray-500">
+                            <div className="mt-auto pt-4 space-y-1 text-sm text-gray-500">
                                 {barber.work_start && barber.work_end && (
                                     <p className="flex items-center justify-center gap-1">
                                         <span>🕐</span>

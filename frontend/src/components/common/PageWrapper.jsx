@@ -82,28 +82,16 @@ const PageWrapper = ({ children, currentView, onNavigate }) => {
                                     </button>
                                 </>
                             ) : (
-                                <>
-                                    <button
-                                        onClick={() => onNavigate("/login")}
-                                        className={`px-4 py-2 rounded-lg transition text-sm font-medium ${
-                                            currentView === "/login"
-                                                ? "bg-amber-600 text-white"
-                                                : "text-gray-700 hover:bg-gray-100"
-                                        }`}
-                                    >
-                                        🔑 Prijava
-                                    </button>
-                                    <button
-                                        onClick={() => onNavigate("/register")}
-                                        className={`px-4 py-2 rounded-lg transition text-sm font-medium ${
-                                            currentView === "/register"
-                                                ? "bg-amber-600 text-white"
-                                                : "text-gray-700 hover:bg-gray-100"
-                                        }`}
-                                    >
-                                        📝 Registracija
-                                    </button>
-                                </>
+                                <button
+                                    onClick={() => onNavigate("/login")}
+                                    className={`px-4 py-2 rounded-lg transition text-sm font-medium ${
+                                        currentView === "/login"
+                                            ? "bg-amber-600 text-white"
+                                            : "text-gray-700 hover:bg-gray-100"
+                                    }`}
+                                >
+                                    🔑 Prijava
+                                </button>
                             )}
                         </div>
 
@@ -168,32 +156,17 @@ const PageWrapper = ({ children, currentView, onNavigate }) => {
                                     </button>
                                 </>
                             ) : (
-                                <>
-                                    <button
-                                        onClick={() => handleNavClick("/login")}
-                                        className={`w-full text-left px-4 py-3 rounded-lg transition text-sm font-medium flex items-center gap-3 ${
-                                            currentView === "/login"
-                                                ? "bg-amber-600 text-white"
-                                                : "text-gray-700 hover:bg-gray-100"
-                                        }`}
-                                    >
-                                        <span className="text-lg">🔑</span>
-                                        Prijava
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            handleNavClick("/register")
-                                        }
-                                        className={`w-full text-left px-4 py-3 rounded-lg transition text-sm font-medium flex items-center gap-3 ${
-                                            currentView === "/register"
-                                                ? "bg-amber-600 text-white"
-                                                : "text-gray-700 hover:bg-gray-100"
-                                        }`}
-                                    >
-                                        <span className="text-lg">📝</span>
-                                        Registracija
-                                    </button>
-                                </>
+                                <button
+                                    onClick={() => handleNavClick("/login")}
+                                    className={`w-full text-left px-4 py-3 rounded-lg transition text-sm font-medium flex items-center gap-3 ${
+                                        currentView === "/login"
+                                            ? "bg-amber-600 text-white"
+                                            : "text-gray-700 hover:bg-gray-100"
+                                    }`}
+                                >
+                                    <span className="text-lg">🔑</span>
+                                    Prijava
+                                </button>
                             )}
                         </div>
                     </div>

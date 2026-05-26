@@ -11,6 +11,7 @@ import MyProfile from "./components/MyProfile";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import AdminPanel from "./components/AdminPanel";
+import Team from "./components/common/Team";
 
 // ============================================
 // App - Glavna aplikacija
@@ -29,6 +30,8 @@ function App() {
                 return <HomePage onNavigate={handleNavigate} />;
             case "/usluge":
                 return <ServicesPage />;
+            case "/tim":
+                return <Team />;
             case "/kontakt":
                 return <ContactPage />;
             case "/zakazi":

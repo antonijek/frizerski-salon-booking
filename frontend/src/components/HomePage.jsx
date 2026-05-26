@@ -54,7 +54,7 @@ const HomePage = ({ onNavigate }) => {
             {/* Hero sekcija */}
             <SectionWrapper
                 background="bg-gradient-to-br from-amber-500 to-orange-600"
-                padding="py-20"
+                padding="pt-28 pb-20"
             >
                 <div className="text-center text-white relative">
                     {/* Dekorativni elementi */}
