@@ -1,14 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import appointmentService from "../../services/appointmentService";
 import LoadingSpinner from "../common/LoadingSpinner";
-
-const periodOptions = [
-    { key: "all", label: "Sve vreme" },
-    { key: "week", label: "Poslednja sedmica" },
-    { key: "month", label: "Poslednji mesec" },
-    { key: "year", label: "Poslednja godina" },
-    { key: "custom", label: "Odredjen datum" },
-];
+import PeriodFilter from "./stats/PeriodFilter";
 
 const StatsTab = () => {
     const [stats, setStats] = useState(null);
@@ -55,6 +48,13 @@ const StatsTab = () => {
         fetchStats();
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+    const handlePeriodChange = (key) => {
+        setPeriod(key);
+        if (key !== "custom") {
+            fetchStats(key);
+        }
+    };
+
     if (loading) return <LoadingSpinner message="Učitavanje statistike..." />;
 
     if (error) {
@@ -64,7 +64,7 @@ const StatsTab = () => {
                 <p className="text-red-500 mb-4">{error}</p>
                 <button
                     onClick={fetchStats}
-                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition"
+                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition"
                 >
                     Pokušaj ponovo
                 </button>
@@ -76,7 +76,9 @@ const StatsTab = () => {
         return (
             <div className="text-center py-12">
                 <div className="text-5xl mb-4">📊</div>
-                <p className="text-gray-500">Nema podataka za statistiku</p>
+                <p className="text-primary-light">
+                    Nema podataka za statistiku
+                </p>
             </div>
         );
     }
@@ -104,7 +106,7 @@ const StatsTab = () => {
             icon: "✂️",
             label: "Aktivnih usluga",
             value: stats.totalServices || 0,
-            color: "bg-amber-50 text-amber-600",
+            color: "bg-primary-light text-primary",
         },
         {
             icon: "🧔",
@@ -122,17 +124,17 @@ const StatsTab = () => {
 
     const renderTable = (title, headers, rows, rowRenderer) => (
         <div className="mt-8">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            <h3 className="text-lg font-semibold text-primary-dark mb-4">
                 {title}
             </h3>
             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                 <table className="w-full">
                     <thead>
-                        <tr className="bg-gray-50 border-b">
-                            {headers.map((h, i) => (
+                        <tr className="bg-neutral border-b">
+                            {headers.map((h) => (
                                 <th
-                                    key={i}
-                                    className="text-left px-4 py-3 text-sm font-semibold text-gray-700"
+                                    key={h}
+                                    className="text-left px-4 py-3 text-sm font-semibold text-primary-dark"
                                 >
                                     {h}
                                 </th>
@@ -141,7 +143,10 @@ const StatsTab = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {rows.map((row, i) => (
-                            <tr key={i} className="hover:bg-gray-50 transition">
+                            <tr
+                                key={row.service ?? row.name ?? row.month ?? i}
+                                className="hover:bg-primary-light transition"
+                            >
                                 {rowRenderer(row, i)}
                             </tr>
                         ))}
@@ -154,86 +159,31 @@ const StatsTab = () => {
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
-                <p className="text-gray-500 text-sm">
+                <p className="text-primary-light text-sm">
                     Pregled statistike salona
                 </p>
                 <button
                     onClick={fetchStats}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm"
+                    className="px-4 py-2 bg-neutral text-primary-dark rounded-lg hover:bg-primary-light transition text-sm"
                 >
                     🔄 Osveži
                 </button>
             </div>
 
-            {/* Filteri za period */}
-            <div className="flex flex-wrap gap-2 mb-6">
-                {periodOptions.map((opt) => (
-                    <button
-                        key={opt.key}
-                        onClick={() => {
-                            setPeriod(opt.key);
-                            if (opt.key !== "custom") {
-                                fetchStats(opt.key);
-                            }
-                        }}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                            period === opt.key
-                                ? "bg-amber-600 text-white"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
-                    >
-                        {opt.label}
-                    </button>
-                ))}
-            </div>
-
-            {period === "custom" && (
-                <div className="flex flex-wrap gap-3 mb-6 items-end">
-                    <div>
-                        <label className="block text-xs text-gray-500 mb-1">
-                            Od datuma
-                        </label>
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs text-gray-500 mb-1">
-                            Do datuma
-                        </label>
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                        />
-                    </div>
-                    <button
-                        onClick={() => {
-                            console.log(
-                                "[StatsTab] Prikaži kliknut, period:",
-                                period,
-                                "startDate:",
-                                startDate,
-                                "endDate:",
-                                endDate,
-                            );
-                            fetchStats();
-                        }}
-                        className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition text-sm"
-                    >
-                        Prikaži
-                    </button>
-                </div>
-            )}
+            <PeriodFilter
+                period={period}
+                startDate={startDate}
+                endDate={endDate}
+                onPeriodChange={handlePeriodChange}
+                onStartDateChange={setStartDate}
+                onEndDateChange={setEndDate}
+                onCustomSubmit={() => fetchStats()}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {statCards.map((card, index) => (
+                {statCards.map((card) => (
                     <div
-                        key={index}
+                        key={card.label}
                         className="bg-white rounded-xl shadow-sm p-6"
                     >
                         <div className="flex items-center gap-4">
@@ -243,10 +193,10 @@ const StatsTab = () => {
                                 {card.icon}
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-primary-light">
                                     {card.label}
                                 </p>
-                                <p className="text-2xl font-bold text-gray-800">
+                                <p className="text-2xl font-bold text-primary-dark">
                                     {card.value}
                                 </p>
                             </div>
@@ -262,10 +212,10 @@ const StatsTab = () => {
                     stats.appointmentsByService,
                     (s) => (
                         <>
-                            <td className="px-4 py-3 text-sm text-gray-800">
+                            <td className="px-4 py-3 text-sm text-primary-dark">
                                 {s.service}
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-600">
+                            <td className="px-4 py-3 text-sm text-primary-light">
                                 {s.count}
                             </td>
                         </>
@@ -279,10 +229,10 @@ const StatsTab = () => {
                     stats.appointmentsByBarber,
                     (b) => (
                         <>
-                            <td className="px-4 py-3 text-sm text-gray-800">
+                            <td className="px-4 py-3 text-sm text-primary-dark">
                                 {b.name}
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-600">
+                            <td className="px-4 py-3 text-sm text-primary-light">
                                 {b.count}
                             </td>
                         </>
@@ -296,10 +246,10 @@ const StatsTab = () => {
                     stats.monthlyStats,
                     (m) => (
                         <>
-                            <td className="px-4 py-3 text-sm text-gray-800">
+                            <td className="px-4 py-3 text-sm text-primary-dark">
                                 {m.month}
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-600">
+                            <td className="px-4 py-3 text-sm text-primary-light">
                                 {m.count}
                             </td>
                         </>
@@ -313,10 +263,10 @@ const StatsTab = () => {
                     stats.monthlyRevenue,
                     (m) => (
                         <>
-                            <td className="px-4 py-3 text-sm text-gray-800">
+                            <td className="px-4 py-3 text-sm text-primary-dark">
                                 {m.month}
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-600">
+                            <td className="px-4 py-3 text-sm text-primary-light">
                                 {parseFloat(m.revenue || 0).toFixed(2)}€
                             </td>
                         </>
