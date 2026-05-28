@@ -12,6 +12,14 @@ const {
     sendCancellationNotification,
 } = require("../emailService");
 
+async function getSalonInfo(salonId) {
+    const rows = await query(
+        "SELECT id, name, email FROM salons WHERE id = ?",
+        [salonId],
+    );
+    return rows.length > 0 ? rows[0] : null;
+}
+
 function buildDateFilter(period, start_date, end_date) {
     let dateFilter = "";
     let dateParams = [];
@@ -33,7 +41,7 @@ function buildDateFilter(period, start_date, end_date) {
 
 async function getAll(salonId) {
     const sql =
-        "SELECT DISTINCT a.id, a.name, a.phone, a.email, DATE_FORMAT(a.date, '%Y-%m-%d') as date, a.time, a.service, a.barber_id, b.name as barber_name, a.created_at FROM appointments a LEFT JOIN barbers b ON a.barber_id = b.id WHERE a.salon_id = ? ORDER BY a.date, a.time";
+        "SELECT DISTINCT a.id, a.name, a.phone, a.email, DATE_FORMAT(a.date, '%Y-%m-%d') as date, a.time, a.service, a.barber_id, b.name as barber_name, a.created_at FROM appointments a LEFT JOIN barbers b ON a.barber_id = b.id WHERE a.salon_id = ? ORDER BY date, a.time";
     return await query(sql, [salonId]);
 }
 
@@ -138,8 +146,9 @@ async function create(salonId, data) {
     ]);
 
     const appointment = { name, phone, email, date, time, service };
-    sendSalonNotification(appointment);
-    sendCustomerConfirmation(appointment);
+    const salonInfo = await getSalonInfo(salonId);
+    sendSalonNotification(appointment, salonInfo);
+    sendCustomerConfirmation(appointment, salonInfo);
 
     return {
         id: result.insertId,
@@ -221,8 +230,9 @@ async function update(salonId, id, data) {
     }
 
     const updatedAppointment = { name, phone, email, date, time, service };
-    sendSalonNotification(updatedAppointment);
-    sendCustomerConfirmation(updatedAppointment);
+    const salonInfo = await getSalonInfo(salonId);
+    sendSalonNotification(updatedAppointment, salonInfo);
+    sendCustomerConfirmation(updatedAppointment, salonInfo);
 
     return { message: "Termin uspešno izmenjen" };
 }
@@ -240,7 +250,8 @@ async function remove(salonId, id) {
     const deleteSql = "DELETE FROM appointments WHERE id = ? AND salon_id = ?";
     await query(deleteSql, [id, salonId]);
 
-    sendCancellationNotification(appointment);
+    const salonInfo = await getSalonInfo(salonId);
+    sendCancellationNotification(appointment, salonInfo);
 
     return { message: "Termin uspešno obrisan" };
 }
