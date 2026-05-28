@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const AppError = require("../utils/AppError");
 
 // ============================================
 // Auth middleware
@@ -10,7 +11,7 @@ const jwt = require("jsonwebtoken");
 function authenticate(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ error: "Niste prijavljeni" });
+        return next(new AppError("Niste prijavljeni", 401));
     }
 
     const token = authHeader.split(" ")[1];
@@ -19,7 +20,7 @@ function authenticate(req, res, next) {
         req.user = decoded;
         next();
     } catch (err) {
-        return res.status(401).json({ error: "Nevažeći token" });
+        return next(new AppError("Nevažeći token", 401));
     }
 }
 
@@ -28,9 +29,21 @@ function authenticate(req, res, next) {
  */
 function isAdmin(req, res, next) {
     if (!req.user || !req.user.isAdmin) {
-        return res.status(403).json({ error: "Nemate administratorska prava" });
+        return next(new AppError("Nemate administratorska prava", 403));
     }
     next();
 }
 
-module.exports = { authenticate, isAdmin };
+/**
+ * Proveri da li je korisnik super admin
+ */
+function isSuperAdmin(req, res, next) {
+    if (!req.user || !req.user.isSuperAdmin) {
+        return next(
+            new AppError("Samo super admin ima pristup ovoj funkciji", 403),
+        );
+    }
+    next();
+}
+
+module.exports = { authenticate, isAdmin, isSuperAdmin };

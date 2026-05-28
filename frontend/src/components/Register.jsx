@@ -59,10 +59,12 @@ const Register = ({ onNavigate }) => {
             <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
                 <div className="text-center mb-8">
                     <div className="text-5xl mb-4">📝</div>
-                    <h2 className="text-2xl font-bold text-gray-800">
+                    <h2 className="text-2xl font-bold text-primary-dark">
                         Registracija
                     </h2>
-                    <p className="text-gray-500 mt-1">Napravite vaš nalog</p>
+                    <p className="text-primary-light mt-1">
+                        Napravite vaš nalog
+                    </p>
                 </div>
 
                 {error && (
@@ -73,7 +75,7 @@ const Register = ({ onNavigate }) => {
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-primary-dark mb-1">
                             Ime i prezime *
                         </label>
                         <input
@@ -83,12 +85,12 @@ const Register = ({ onNavigate }) => {
                             onChange={handleChange}
                             required
                             placeholder="Vaše ime"
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-primary-dark mb-1">
                             Email *
                         </label>
                         <input
@@ -98,12 +100,12 @@ const Register = ({ onNavigate }) => {
                             onChange={handleChange}
                             required
                             placeholder="vase@email.com"
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-primary-dark mb-1">
                             Telefon *
                         </label>
                         <input
@@ -113,12 +115,12 @@ const Register = ({ onNavigate }) => {
                             onChange={handleChange}
                             required
                             placeholder="+381 6X XXX XXXX"
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-primary-dark mb-1">
                             Lozinka *
                         </label>
                         <input
@@ -129,12 +131,12 @@ const Register = ({ onNavigate }) => {
                             required
                             minLength={6}
                             placeholder="Najmanje 6 karaktera"
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-primary-dark mb-1">
                             Potvrdi lozinku *
                         </label>
                         <input
@@ -144,24 +146,24 @@ const Register = ({ onNavigate }) => {
                             onChange={handleChange}
                             required
                             placeholder="Ponovite lozinku"
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
                         />
                     </div>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-amber-600 text-white py-2.5 rounded-lg font-semibold hover:bg-amber-700 transition disabled:opacity-50"
+                        className="w-full bg-primary text-white py-2.5 rounded-lg font-semibold hover:bg-primary-hover transition disabled:opacity-50"
                     >
                         {loading ? "Registracija..." : "Registruj se"}
                     </button>
                 </form>
 
-                <div className="mt-6 text-center text-sm text-gray-500">
+                <div className="mt-6 text-center text-sm text-primary-light">
                     Već imate nalog?{" "}
                     <button
                         onClick={() => onNavigate("/login")}
-                        className="text-amber-600 hover:text-amber-700 font-medium"
+                        className="text-primary hover:text-primary-hover font-medium"
                     >
                         Prijavite se
                     </button>

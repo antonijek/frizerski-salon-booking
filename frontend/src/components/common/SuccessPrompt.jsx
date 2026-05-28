@@ -15,7 +15,7 @@ const SuccessPrompt = ({ show, onNavigate }) => {
             </p>
             <button
                 onClick={() => onNavigate("/moj-profil")}
-                className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition font-medium"
+                className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition font-medium"
             >
                 👤 Pogledaj moj profil
             </button>

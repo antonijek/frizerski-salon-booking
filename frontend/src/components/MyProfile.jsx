@@ -39,10 +39,10 @@ const MyProfile = () => {
 
     return (
         <div className="bg-white rounded-2xl shadow-xl p-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">
+            <h2 className="text-3xl font-bold text-primary-dark mb-2">
                 👤 Moj profil
             </h2>
-            <p className="text-gray-500 mb-6">
+            <p className="text-primary-light mb-6">
                 Unesite broj telefona da vidite i upravljate svojim terminima
             </p>
 
@@ -56,11 +56,11 @@ const MyProfile = () => {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="npr. 0612345678"
-                    className="w-full sm:flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                    className="w-full sm:flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                 />
                 <button
                     type="submit"
-                    className="w-full sm:w-auto px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition font-medium"
+                    className="w-full sm:w-auto px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition font-medium"
                 >
                     🔍 Pretraži
                 </button>
@@ -75,7 +75,7 @@ const MyProfile = () => {
             )}
 
             {!loading && !error && searched && appointments.length === 0 && (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-primary-light">
                     <div className="text-5xl mb-4">📭</div>
                     <p className="text-lg">
                         Nema zakazanih termina za ovaj broj telefona
@@ -85,7 +85,7 @@ const MyProfile = () => {
 
             {!loading && appointments.length > 0 && (
                 <div className="space-y-4">
-                    <h3 className="text-xl font-semibold text-gray-700">
+                    <h3 className="text-xl font-semibold text-primary-dark">
                         Vaši termini ({appointments.length})
                     </h3>
                     {appointments.map((appointment) => {

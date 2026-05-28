@@ -3,9 +3,8 @@ import LoadingSpinner from "../common/LoadingSpinner";
 import EmptyState from "./EmptyState";
 import NotificationBanner from "./NotificationBanner";
 import AdminFilters from "./AdminFilters";
-import AdminModal from "./AdminModal";
 import ConfirmDialog from "../common/ConfirmDialog";
-import TimeSlotPicker from "../common/TimeSlotPicker";
+import EditAppointmentForm from "./appointment/EditAppointmentForm";
 
 const AppointmentsTab = () => {
     const {
@@ -69,29 +68,29 @@ const AppointmentsTab = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="bg-gray-50 border-b">
-                                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">
+                                <tr className="bg-neutral border-b">
+                                    <th className="text-left px-4 py-3 text-sm font-semibold text-primary-dark">
                                         Ime
                                     </th>
-                                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">
+                                    <th className="text-left px-4 py-3 text-sm font-semibold text-primary-dark">
                                         Telefon
                                     </th>
-                                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">
+                                    <th className="text-left px-4 py-3 text-sm font-semibold text-primary-dark">
                                         Email
                                     </th>
-                                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">
+                                    <th className="text-left px-4 py-3 text-sm font-semibold text-primary-dark">
                                         Datum
                                     </th>
-                                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">
+                                    <th className="text-left px-4 py-3 text-sm font-semibold text-primary-dark">
                                         Vreme
                                     </th>
-                                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">
+                                    <th className="text-left px-4 py-3 text-sm font-semibold text-primary-dark">
                                         Usluga
                                     </th>
-                                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">
+                                    <th className="text-left px-4 py-3 text-sm font-semibold text-primary-dark">
                                         Frizer
                                     </th>
-                                    <th className="text-right px-4 py-3 text-sm font-semibold text-gray-700">
+                                    <th className="text-right px-4 py-3 text-sm font-semibold text-primary-dark">
                                         Akcija
                                     </th>
                                 </tr>
@@ -100,33 +99,33 @@ const AppointmentsTab = () => {
                                 {appointments.map((app) => (
                                     <tr
                                         key={app.id}
-                                        className="hover:bg-gray-50 transition"
+                                        className="hover:bg-primary-light transition"
                                     >
-                                        <td className="px-4 py-3 text-sm text-gray-800">
+                                        <td className="px-4 py-3 text-sm text-primary-dark">
                                             {app.name}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                        <td className="px-4 py-3 text-sm text-primary-light">
                                             {app.phone}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                        <td className="px-4 py-3 text-sm text-primary-light">
                                             {app.email || "-"}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                        <td className="px-4 py-3 text-sm text-primary-light">
                                             {app.date}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                        <td className="px-4 py-3 text-sm text-primary-light">
                                             {app.time}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                        <td className="px-4 py-3 text-sm text-primary-light">
                                             {app.service}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                        <td className="px-4 py-3 text-sm text-primary-light">
                                             {app.barber_name ? (
                                                 <span>
                                                     🧔 {app.barber_name}
                                                 </span>
                                             ) : (
-                                                <span className="text-gray-400">
+                                                <span className="text-primary-light">
                                                     -
                                                 </span>
                                             )}
@@ -137,7 +136,7 @@ const AppointmentsTab = () => {
                                                     onClick={() =>
                                                         openEditForm(app)
                                                     }
-                                                    className="text-amber-600 hover:text-amber-800 transition text-sm"
+                                                    className="text-primary hover:text-primary-hover transition text-sm"
                                                     title="Izmeni termin"
                                                 >
                                                     ✏️
@@ -158,141 +157,25 @@ const AppointmentsTab = () => {
                             </tbody>
                         </table>
                     </div>
-                    <div className="bg-gray-50 px-4 py-3 text-sm text-gray-500 border-t">
+                    <div className="bg-neutral px-4 py-3 text-sm text-primary-light border-t">
                         Ukupno: {appointments.length} termina
                     </div>
                 </div>
             )}
 
-            {/* Modal za izmenu termina */}
-            <AdminModal
-                isOpen={!!editingAppointment}
-                onClose={closeEditForm}
-                title="Izmeni termin"
-            >
-                <form onSubmit={handleEditSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Ime i prezime *
-                        </label>
-                        <input
-                            type="text"
-                            name="name"
-                            value={editForm.name}
-                            onChange={handleEditChange}
-                            placeholder="npr. Petar Petrović"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Telefon *
-                        </label>
-                        <input
-                            type="text"
-                            name="phone"
-                            value={editForm.phone}
-                            onChange={handleEditChange}
-                            placeholder="npr. 067551384"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Email (opciono)
-                        </label>
-                        <input
-                            type="email"
-                            name="email"
-                            value={editForm.email}
-                            onChange={handleEditChange}
-                            placeholder="npr. petar@email.com"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Datum *
-                        </label>
-                        <input
-                            type="date"
-                            name="date"
-                            value={editForm.date}
-                            onChange={handleEditChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                        />
-                    </div>
-
-                    {/* Vreme - TimeSlotPicker */}
-                    <TimeSlotPicker
-                        timeSlots={timeSlots}
-                        bookedTimes={bookedTimes}
-                        selectedTime={editForm.time}
-                        onSelect={handleEditChange}
-                    />
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Usluga *
-                        </label>
-                        <select
-                            name="service"
-                            value={editForm.service}
-                            onChange={handleEditChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                        >
-                            <option value="">Izaberi uslugu</option>
-                            {services.map((s) => (
-                                <option key={s.name} value={s.name}>
-                                    {s.icon || "✂️"} {s.name} -{" "}
-                                    {parseFloat(s.price).toFixed(2)}€
-                                    {s.duration ? ` (~${s.duration}min)` : ""}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Frizer
-                        </label>
-                        <select
-                            name="barber_id"
-                            value={editForm.barber_id}
-                            onChange={handleEditChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                        >
-                            <option value="">Automatski dodeli</option>
-                            {barbers.map((b) => (
-                                <option key={b.id} value={b.id}>
-                                    🧔 {b.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    {/* Poruka o grešci */}
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                            {error}
-                        </div>
-                    )}
-
-                    <div className="flex gap-3 pt-2">
-                        <button
-                            type="button"
-                            onClick={closeEditForm}
-                            className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
-                        >
-                            Odustani
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={saving}
-                            className="flex-1 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {saving ? "Čuvanje..." : "Sačuvaj izmene"}
-                        </button>
-                    </div>
-                </form>
-            </AdminModal>
+            <EditAppointmentForm
+                editingAppointment={editingAppointment}
+                editForm={editForm}
+                saving={saving}
+                error={error}
+                timeSlots={timeSlots}
+                bookedTimes={bookedTimes}
+                services={services}
+                barbers={barbers}
+                closeEditForm={closeEditForm}
+                handleEditChange={handleEditChange}
+                handleEditSubmit={handleEditSubmit}
+            />
 
             {/* Confirm dialog za brisanje */}
             <ConfirmDialog

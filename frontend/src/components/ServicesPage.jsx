@@ -49,7 +49,7 @@ const ServicesPage = () => {
                 {services.length === 0 ? (
                     <div className="text-center py-12">
                         <div className="text-5xl mb-4">✂️</div>
-                        <p className="text-gray-500">
+                        <p className="text-primary-light">
                             Trenutno nema dostupnih usluga
                         </p>
                     </div>

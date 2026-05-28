@@ -12,6 +12,7 @@ import Login from "./components/Login";
 import Register from "./components/Register";
 import AdminPanel from "./components/AdminPanel";
 import Team from "./components/common/Team";
+import useSalonTheme from "./hooks/useSalonTheme";
 
 // ============================================
 // App - Glavna aplikacija
@@ -19,6 +20,7 @@ import Team from "./components/common/Team";
 
 function App() {
     const [currentView, setCurrentView] = useState("/");
+    const { salon, loading } = useSalonTheme("main");
 
     const handleNavigate = (view) => {
         setCurrentView(view);
@@ -27,7 +29,7 @@ function App() {
     const renderView = () => {
         switch (currentView) {
             case "/":
-                return <HomePage onNavigate={handleNavigate} />;
+                return <HomePage onNavigate={handleNavigate} salon={salon} />;
             case "/usluge":
                 return <ServicesPage />;
             case "/tim":
@@ -63,6 +65,8 @@ function App() {
                 <PageWrapper
                     currentView={currentView}
                     onNavigate={handleNavigate}
+                    salon={salon}
+                    loading={loading}
                 >
                     {renderView()}
                 </PageWrapper>

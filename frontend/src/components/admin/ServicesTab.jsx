@@ -38,12 +38,12 @@ const ServicesTab = () => {
             <NotificationBanner type="success" message={successMessage} />
 
             <div className="flex justify-between items-center mb-6">
-                <p className="text-gray-500 text-sm">
+                <p className="text-primary-light text-sm">
                     {services.length} usluga
                 </p>
                 <button
                     onClick={openCreateForm}
-                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition text-sm font-medium"
+                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition text-sm font-medium"
                 >
                     + Dodaj uslugu
                 </button>
@@ -63,26 +63,26 @@ const ServicesTab = () => {
                                     {service.icon || "✂️"}
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-gray-800">
+                                    <h3 className="font-semibold text-primary-dark">
                                         {service.name}
                                     </h3>
-                                    <p className="text-sm text-gray-500">
+                                    <p className="text-sm text-primary-light">
                                         {service.duration} min
                                     </p>
                                     {service.description && (
-                                        <p className="text-sm text-gray-400 mt-1">
+                                        <p className="text-sm text-primary-light mt-1">
                                             {service.description}
                                         </p>
                                     )}
                                 </div>
                             </div>
                             <div className="flex items-center gap-4">
-                                <span className="text-lg font-bold text-amber-600">
+                                <span className="text-lg font-bold text-primary">
                                     {parseFloat(service.price).toFixed(2)}€
                                 </span>
                                 <button
                                     onClick={() => openEditForm(service)}
-                                    className="text-amber-600 hover:text-amber-800 transition"
+                                    className="text-primary hover:text-primary-hover transition"
                                     title="Izmeni uslugu"
                                 >
                                     ✏️
@@ -108,7 +108,7 @@ const ServicesTab = () => {
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-primary-dark mb-1">
                             Ikona
                         </label>
                         <input
@@ -117,11 +117,11 @@ const ServicesTab = () => {
                             value={form.icon}
                             onChange={handleChange}
                             placeholder="✂️"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-primary-dark mb-1">
                             Naziv usluge *
                         </label>
                         <input
@@ -130,12 +130,12 @@ const ServicesTab = () => {
                             value={form.name}
                             onChange={handleChange}
                             placeholder="npr. Šišanje"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-primary-dark mb-1">
                                 Trajanje (min) *
                             </label>
                             <input
@@ -145,11 +145,11 @@ const ServicesTab = () => {
                                 onChange={handleChange}
                                 placeholder="30"
                                 min="5"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-primary-dark mb-1">
                                 Cena (€) *
                             </label>
                             <input
@@ -160,12 +160,12 @@ const ServicesTab = () => {
                                 placeholder="15"
                                 min="0"
                                 step="0.01"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                             />
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-primary-dark mb-1">
                             Opis (opciono)
                         </label>
                         <textarea
@@ -174,21 +174,21 @@ const ServicesTab = () => {
                             onChange={handleChange}
                             placeholder="Kratak opis usluge..."
                             rows="3"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none resize-none"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
                         />
                     </div>
                     <div className="flex gap-3 pt-2">
                         <button
                             type="button"
                             onClick={closeForm}
-                            className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
+                            className="flex-1 py-2 border border-gray-300 text-primary-dark rounded-lg hover:bg-primary-light transition font-medium"
                         >
                             Odustani
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
-                            className="flex-1 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {saving
                                 ? "Čuvanje..."

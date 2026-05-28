@@ -22,8 +22,16 @@ db.connect((err) => {
         CREATE TABLE IF NOT EXISTS barbers (
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(100) NOT NULL,
+            image_url VARCHAR(500),
+            title VARCHAR(100),
+            bio TEXT,
             is_active BOOLEAN DEFAULT TRUE,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            work_days VARCHAR(20) DEFAULT '1,2,3,4,5,6',
+            work_start TIME DEFAULT '09:00:00',
+            work_end TIME DEFAULT '17:00:00',
+            salon_id INT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
         ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
     `;
 
@@ -58,7 +66,7 @@ db.connect((err) => {
             }
         });
 
-        // Kreiraj tabelu appointments (sa barber_id)
+        // Kreiraj tabelu appointments (sa barber_id i salon_id)
         const createAppointmentsTableSql = `
             CREATE TABLE IF NOT EXISTS appointments (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -69,9 +77,11 @@ db.connect((err) => {
                 time TIME NOT NULL,
                 service VARCHAR(100) NOT NULL,
                 barber_id INT,
+                salon_id INT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE KEY unique_appointment (date, time, barber_id),
-                FOREIGN KEY (barber_id) REFERENCES barbers(id) ON DELETE SET NULL
+                FOREIGN KEY (barber_id) REFERENCES barbers(id) ON DELETE SET NULL,
+                FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
             )
         `;
 
@@ -91,7 +101,9 @@ db.connect((err) => {
                 price DECIMAL(10,2) NOT NULL,
                 description TEXT,
                 icon VARCHAR(10) DEFAULT '✂️',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                salon_id INT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
             ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
         `;
 
@@ -170,7 +182,10 @@ db.connect((err) => {
             password VARCHAR(255) NOT NULL,
             phone VARCHAR(20),
             is_admin BOOLEAN DEFAULT FALSE,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            is_super_admin BOOLEAN DEFAULT FALSE,
+            salon_id INT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
         )
     `;
 

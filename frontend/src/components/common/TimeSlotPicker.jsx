@@ -16,7 +16,7 @@ const TimeSlotPicker = ({
 
     return (
         <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-primary-dark mb-1">
                 Vreme *
             </label>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -29,16 +29,16 @@ const TimeSlotPicker = ({
                         "py-2 px-3 rounded-lg text-sm font-medium transition";
 
                     if (selectedTime === time) {
-                        buttonClass += " bg-amber-600 text-white";
+                        buttonClass += " bg-primary text-white";
                     } else if (isBooked) {
                         buttonClass +=
                             " bg-red-100 text-red-400 cursor-not-allowed line-through";
                     } else if (isPast) {
                         buttonClass +=
-                            " bg-gray-200 text-gray-400 cursor-not-allowed line-through";
+                            " bg-neutral text-primary-light cursor-not-allowed line-through";
                     } else {
                         buttonClass +=
-                            " bg-gray-100 text-gray-700 hover:bg-gray-200";
+                            " bg-neutral text-primary-dark hover:bg-primary-light";
                     }
 
                     return (
@@ -64,7 +64,7 @@ const TimeSlotPicker = ({
                 })}
             </div>
             {pastSlots.length > 0 && (
-                <p className="mt-2 text-xs text-gray-400">
+                <p className="mt-2 text-xs text-primary-light">
                     ⏰ Termini sa satom su već prošli i nisu dostupni za
                     zakazivanje
                 </p>

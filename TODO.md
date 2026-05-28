@@ -1,17 +1,67 @@
-# TODO - Ispravka termina
+# TODO - Frizerski salon booking
 
-## Bug 1: Admin izmena - provera radnog vremena ne uzima u obzir trajanje usluge
+## Trenutno stanje (27.05.2026)
 
-- [ ] U `useAdminAppointments.js` - filterSlotsByBarber treba da uzme u obzir trajanje usluge
-- [ ] U `backend/routes/appointments.js` - provera radnog vremena treba da uzme u obzir da se edituje ISTI termin (preskoči ga)
+Sve radi. Backend na portu 5000, frontend na 5173.
+**Napomena:** `msmtp` email slanje ne radi na Windowsu — treba popraviti.
 
-## Bug 2: Booking - zauzeti termini kad nije izabran frizer
+### ✅ Urađeno u posljednjoj sesiji: Uklonjen `status` u potpunosti
 
-- [ ] U `useBookingForm.js` - kada nije izabran frizer, prikazati samo termine kad su SVI frizeri zauzeti
+- [x] `backend/routes/appointments.js` — uklonjen `a.status` iz 4 SELECT upita, `status, 'confirmed'` iz INSERT-a, `status = ?` iz UPDATE-a, cijeli `PATCH /:id/status` route
+- [x] `frontend/src/components/admin/AppointmentsTab.jsx` — uklonjen `statusConfig`, Status `<th>`, status `<td>` kolona
+- [x] `frontend/src/hooks/useAdminAppointments.js` — uklonjena `handleStatusChange`
+- [x] `frontend/src/services/appointmentService.js` — uklonjena `updateStatus`
+- [x] Baza: `ALTER TABLE appointments DROP COLUMN status;`
+- [x] Obrisan `backend/add-appointments-status.js`
+- [x] API verifikovan — `GET /api/appointments` vraća podatke bez `status` polja
 
-## Bug 3: Admin - dupla provera preklapanja
+---
 
-- [ ] U `useAdminAppointments.js` - ukloniti lokalnu proveru preklapanja, prepustiti serveru
+## Završeno ✅
+
+- [x] TESTIRANJE super admin panela (POST/DELETE salons, frontend SaloniTab)
+- [x] APPOINTMENTS - Uklonjena `status` kolona (bila pending/confirmed/cancelled/completed)
+    - [x] Obrisana migration skripta `backend/add-appointments-status.js`
+    - [x] `backend/init-db.js` - uklonjen status iz SQL upita
+    - [x] `database/schema.sql` - uklonjen status iz CREATE TABLE
+    - [x] `backend/routes/appointments.js` - sve GET rute bez statusa, POST/PUT bez statusa, uklonjena PATCH /:id/status
+    - [x] `frontend/src/services/appointmentService.js` - uklonjen `updateStatus()` metod
+    - [x] `frontend/src/hooks/useAdminAppointments.js` - uklonjen `handleStatusChange`
+    - [x] `frontend/src/components/admin/AppointmentsTab.jsx` - uklonjena Status kolona
+    - [x] Baza: `ALTER TABLE appointments DROP COLUMN status`
+
+## Sledeće 🔧
+
+### 1. 🔧 INIT-DB - Dodati `salon_id` u appointments tabelu
+
+- [ ] U `backend/init-db.js` CREATE TABLE appointments nedostaje `salon_id` kolona
+- [ ] Proveriti da li `database/schema.sql` takođe fali
+
+### 2. 🔧 GALLERY - Proveriti gallery rute
+
+- [ ] Proveriti da li gallery rute rade ispravno sa salon context middleware-om
+- [ ] Testirati upload i GET za galeriju
+
+### 3. 🔧 REGISTRATION - Popraviti registraciju
+
+- [ ] Registracija ne dodeljuje `salon_id` novom korisniku
+- [ ] Popraviti `backend/routes/auth.js` da poveže korisnika sa salonom
+
+### 4. 🔧 ERROR HANDLING - Unifikacija
+
+- [ ] Ujednačiti error response format na svim rutama
+- [ ] Dodati global error handler middleware
+
+### 5. 🔧 DOCKER - Docker setup
+
+- [ ] Kreirati Dockerfile za backend
+- [ ] Kreirati Dockerfile za frontend
+- [ ] Kreirati docker-compose.yml
+
+### 6. 🔧 EMAIL - Popraviti msmtp na Windowsu
+
+- [ ] `msmtp` nije Windows komanda — email slanje pada sa "msmtp is not recognized"
+- [ ] Ili instalirati msmtp za Windows, ili prebaciti na nodemailer
 
 ---
 
@@ -74,5 +124,3 @@ scp db-backup.sql root@213.199.32.240:/root/
 ssh root@213.199.32.240
 mysql -u root -p frizerski_salon < /root/db-backup.sql
 ```
-
-**⚠️ VAŽNO:** Ovo će **zameniti** sve podatke na serveru podacima iz lokalne baze. Ako ima appointmenta na serveru koji nisu lokalno, biće izgubljeni.

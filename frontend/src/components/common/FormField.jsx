@@ -19,13 +19,13 @@ const FormField = ({
     className = "",
 }) => {
     const baseClass =
-        "w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none";
+        "w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none";
     const errorClass =
         touched && error ? "border-red-300 bg-red-50" : "border-gray-300";
 
     return (
         <div className={className}>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-primary-dark mb-1">
                 {label}
                 {required && " *"}
             </label>

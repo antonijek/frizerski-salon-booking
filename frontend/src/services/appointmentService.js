@@ -1,186 +1,67 @@
-import requestInstance from "./requestInstance";
+import apiCall from "../utils/apiCall";
 
 // ============================================
 // Appointment Service - svi API pozivi za termine
 // ============================================
 
 const appointmentService = {
-    /**
-     * Dohvati sve termine
-     * @returns {Promise<Array>} Lista termina
-     */
-    getAll: async () => {
-        try {
-            const response = await requestInstance.get("/appointments");
-            return response.data;
-        } catch (error) {
-            throw (
-                error.response?.data || {
-                    error: "Greška pri dohvatanju termina",
-                }
-            );
-        }
-    },
+    getAll: () =>
+        apiCall.get("/appointments", {}, "Greška pri dohvatanju termina"),
 
-    /**
-     * Dohvati termine za odredjeni datum
-     * @param {string} date - Datum u formatu YYYY-MM-DD
-     * @returns {Promise<Array>} Lista termina za taj datum
-     */
-    getByDate: async (date) => {
-        try {
-            const response = await requestInstance.get(
-                `/appointments/date/${date}`,
-            );
-            return response.data;
-        } catch (error) {
-            throw (
-                error.response?.data || {
-                    error: "Greška pri dohvatanju termina",
-                }
-            );
-        }
-    },
+    getByDate: (date) =>
+        apiCall.get(
+            `/appointments/date/${date}`,
+            {},
+            "Greška pri dohvatanju termina",
+        ),
 
-    /**
-     * Dohvati termine za odredjeni datum i frizera
-     * @param {string} date - Datum u formatu YYYY-MM-DD
-     * @param {number} barberId - ID frizera
-     * @returns {Promise<Array>} Lista termina za taj datum i frizera
-     */
-    getByDateAndBarber: async (date, barberId) => {
-        try {
-            const response = await requestInstance.get(
-                `/appointments/date/${date}/barber/${barberId}`,
-            );
-            return response.data;
-        } catch (error) {
-            throw (
-                error.response?.data || {
-                    error: "Greška pri dohvatanju termina",
-                }
-            );
-        }
-    },
+    getByDateAndBarber: (date, barberId) =>
+        apiCall.get(
+            `/appointments/date/${date}/barber/${barberId}`,
+            {},
+            "Greška pri dohvatanju termina",
+        ),
 
-    /**
-     * Dohvati termine po broju telefona
-     * @param {string} phone - Broj telefona
-     * @returns {Promise<Array>} Lista termina za taj broj
-     */
-    getByPhone: async (phone) => {
-        try {
-            const response = await requestInstance.get(
-                `/appointments/phone/${encodeURIComponent(phone)}`,
-            );
-            return response.data;
-        } catch (error) {
-            throw (
-                error.response?.data || {
-                    error: "Greška pri dohvatanju termina",
-                }
-            );
-        }
-    },
+    getByPhone: (phone) =>
+        apiCall.get(
+            `/appointments/phone/${encodeURIComponent(phone)}`,
+            {},
+            "Greška pri dohvatanju termina",
+        ),
 
-    /**
-     * Kreiraj novi termin
-     * @param {Object} appointmentData - Podaci o terminu
-     * @param {string} appointmentData.name - Ime i prezime
-     * @param {string} appointmentData.phone - Broj telefona
-     * @param {string} [appointmentData.email] - Email (opciono)
-     * @param {string} appointmentData.date - Datum YYYY-MM-DD
-     * @param {string} appointmentData.time - Vreme HH:mm
-     * @param {string} appointmentData.service - Naziv usluge
-     * @returns {Promise<Object>} Kreirani termin
-     */
-    create: async (appointmentData) => {
-        try {
-            const response = await requestInstance.post(
-                "/appointments",
-                appointmentData,
-            );
-            return response.data;
-        } catch (error) {
-            throw (
-                error.response?.data || {
-                    error: "Greška pri kreiranju termina",
-                }
-            );
-        }
-    },
+    create: (appointmentData) =>
+        apiCall.post(
+            "/appointments",
+            appointmentData,
+            "Greška pri kreiranju termina",
+        ),
 
-    /**
-     * Izmeni termin
-     * @param {number} id - ID termina
-     * @param {Object} appointmentData - Podaci o terminu
-     * @returns {Promise<Object>} Poruka o uspehu
-     */
-    update: async (id, appointmentData) => {
-        try {
-            const response = await requestInstance.put(
-                `/appointments/${id}`,
-                appointmentData,
-            );
-            return response.data;
-        } catch (error) {
-            throw (
-                error.response?.data || { error: "Greška pri izmeni termina" }
-            );
-        }
-    },
+    update: (id, appointmentData) =>
+        apiCall.put(
+            `/appointments/${id}`,
+            appointmentData,
+            "Greška pri izmeni termina",
+        ),
 
-    /**
-     * Obrisi termin
-     * @param {number} id - ID termina
-     * @returns {Promise<Object>} Poruka o uspehu
-     */
-    delete: async (id) => {
-        try {
-            const response = await requestInstance.delete(
-                `/appointments/${id}`,
-            );
-            return response.data;
-        } catch (error) {
-            throw (
-                error.response?.data || { error: "Greška pri brisanju termina" }
-            );
-        }
-    },
+    delete: (id) =>
+        apiCall.delete(`/appointments/${id}`, "Greška pri brisanju termina"),
 
-    /**
-     * Dohvati statistiku (samo admin)
-     * @param {Object} [filters] - Filteri za statistiku
-     * @param {string} [filters.period] - "all" | "week" | "month" | "year" | "custom"
-     * @param {string} [filters.start_date] - YYYY-MM-DD (obavezno za custom)
-     * @param {string} [filters.end_date] - YYYY-MM-DD (obavezno za custom)
-     * @returns {Promise<Object>} Statistički podaci
-     */
-    getStats: async (filters = {}) => {
-        try {
-            const params = new URLSearchParams();
-            if (filters.period && filters.period !== "all") {
-                params.append("period", filters.period);
-            }
-            if (filters.start_date) {
-                params.append("start_date", filters.start_date);
-            }
-            if (filters.end_date) {
-                params.append("end_date", filters.end_date);
-            }
-            const queryString = params.toString();
-            const url = queryString
-                ? `/appointments/stats?${queryString}`
-                : "/appointments/stats";
-            const response = await requestInstance.get(url);
-            return response.data;
-        } catch (error) {
-            throw (
-                error.response?.data || {
-                    error: "Greška pri dohvatanju statistike",
-                }
-            );
+    getStats: (filters = {}) => {
+        const params = {};
+        if (filters.period && filters.period !== "all") {
+            params.period = filters.period;
         }
+        if (filters.start_date) {
+            params.start_date = filters.start_date;
+        }
+        if (filters.end_date) {
+            params.end_date = filters.end_date;
+        }
+        return apiCall.get(
+            "/appointments/stats",
+            params,
+            "Greška pri dohvatanju statistike",
+        );
     },
 };
 

@@ -19,15 +19,15 @@ const ConfirmDialog = ({
             <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
                 <div className="text-center">
                     <div className="text-5xl mb-4">⚠️</div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    <h3 className="text-xl font-bold text-primary-dark mb-2">
                         {title || "Potvrda"}
                     </h3>
-                    <p className="text-gray-600 mb-6">{message}</p>
+                    <p className="text-primary-light mb-6">{message}</p>
                     <div className="flex gap-3">
                         <button
                             onClick={onCancel}
                             disabled={isLoading}
-                            className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium disabled:opacity-50"
+                            className="flex-1 py-2 border border-gray-300 text-primary-dark rounded-lg hover:bg-primary-light transition font-medium disabled:opacity-50"
                         >
                             {cancelText}
                         </button>

@@ -1,4 +1,4 @@
--- Kreiranje baze podataka
+Ant260142kne-- Kreiranje baze podataka
 CREATE DATABASE IF NOT EXISTS frizerski_salon;
 USE frizerski_salon;
 
@@ -13,7 +13,9 @@ CREATE TABLE IF NOT EXISTS barbers (
     work_days VARCHAR(20) DEFAULT '1,2,3,4,5,6',
     work_start TIME DEFAULT '09:00:00',
     work_end TIME DEFAULT '17:00:00',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    salon_id INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Ubaci osnovne frizere
@@ -33,9 +35,11 @@ CREATE TABLE IF NOT EXISTS appointments (
     time TIME NOT NULL,
     service VARCHAR(100) NOT NULL,
     barber_id INT,
+    salon_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY unique_appointment (date, time, barber_id),
-    FOREIGN KEY (barber_id) REFERENCES barbers(id) ON DELETE SET NULL
+    FOREIGN KEY (barber_id) REFERENCES barbers(id) ON DELETE SET NULL,
+    FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
 );
 
 -- Tabela za korisnike
@@ -46,7 +50,10 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
     is_admin BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    is_super_admin BOOLEAN DEFAULT FALSE,
+    salon_id INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
 );
 
 -- Tabela za usluge
@@ -57,7 +64,9 @@ CREATE TABLE IF NOT EXISTS services (
     price DECIMAL(10, 2) NOT NULL,
     description TEXT,
     icon VARCHAR(10) DEFAULT '✂️',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    salon_id INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Ubaci osnovne usluge
@@ -77,14 +86,60 @@ CREATE TABLE IF NOT EXISTS gallery_images (
     src VARCHAR(500) NOT NULL,
     alt VARCHAR(200) NOT NULL,
     sort_order INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    salon_id INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Ubaci pocetne slike iz salonConfig
-INSERT INTO gallery_images (src, alt, sort_order) VALUES
-('https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&h=600&fit=crop', 'Frizura 1', 1),
-('https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=600&fit=crop', 'Frizura 2', 2),
-('https://images.unsplash.com/photo-1562322140-8baeececf3df?w=600&h=600&fit=crop', 'Frizura 3', 3),
-('https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=600&h=600&fit=crop', 'Frizura 4', 4),
-('https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=600&h=600&fit=crop', 'Frizura 5', 5),
-('https://images.unsplash.com/photo-1634302086195-76c43c3e2e4f?w=600&h=600&fit=crop', 'Frizura 6', 6);
+INSERT INTO gallery_images (src, alt, sort_order, salon_id) VALUES
+('https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&h=600&fit=crop', 'Frizura 1', 1, 1),
+('https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=600&fit=crop', 'Frizura 2', 2, 1),
+('https://images.unsplash.com/photo-1562322140-8baeececf3df?w=600&h=600&fit=crop', 'Frizura 3', 3, 1),
+('https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=600&h=600&fit=crop', 'Frizura 4', 4, 1),
+('https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=600&h=600&fit=crop', 'Frizura 5', 5, 1),
+('https://images.unsplash.com/photo-1634302086195-76c43c3e2e4f?w=600&h=600&fit=crop', 'Frizura 6', 6, 1);
+
+-- ============================================
+-- Tabela za salone (multi-tenant)
+-- ============================================
+CREATE TABLE IF NOT EXISTS salons (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    subdomain VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(200) NOT NULL,
+    short_name VARCHAR(100),
+    tagline VARCHAR(300),
+    description TEXT,
+    logo_url VARCHAR(500),
+    hero_image_url VARCHAR(500),
+    phone VARCHAR(50),
+    email VARCHAR(200),
+    address VARCHAR(300),
+    working_hours_start TIME DEFAULT '09:00:00',
+    working_hours_end TIME DEFAULT '17:00:00',
+    working_hours_interval INT DEFAULT 30,
+    working_days VARCHAR(50) DEFAULT '1,2,3,4,5,6',
+    
+    -- Boje (hex vrednosti)
+    primary_color VARCHAR(7) DEFAULT '#d97706',
+    primary_hover VARCHAR(7) DEFAULT '#b45309',
+    primary_light VARCHAR(7) DEFAULT '#fffbeb',
+    primary_bg_from VARCHAR(7) DEFAULT '#fef3c7',
+    primary_bg_to VARCHAR(7) DEFAULT '#ffedd5',
+    neutral_bg VARCHAR(7) DEFAULT '#f9fafb',
+    text_primary VARCHAR(7) DEFAULT '#1f2937',
+    text_secondary VARCHAR(7) DEFAULT '#6b7280',
+    
+    -- Fontovi
+    heading_font VARCHAR(100) DEFAULT 'Inter',
+    body_font VARCHAR(100) DEFAULT 'Inter',
+    
+    -- Podesavanja
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Ubaci podrazumevani salon
+INSERT INTO salons (subdomain, name, short_name, tagline, description, phone, email, address) VALUES
+('main', 'Frizerski Salon', 'Salon', 'Profesionalna nega vaše kose', 'Dobrodošli u naš salon gde vaša kosa dobija najbolju negu.', '+381 61 234 567', 'info@salon.rs', 'Ulica bb, Grad');

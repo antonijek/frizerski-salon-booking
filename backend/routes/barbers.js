@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db");
 const { authenticate } = require("../middleware/auth");
+const AppError = require("../utils/AppError");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
@@ -43,46 +44,55 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
 });
 
+// Helper: async query wrapper
+const query = (sql, params) =>
+    new Promise((resolve, reject) => {
+        db.query(sql, params, (err, results) => {
+            if (err) return reject(err);
+            resolve(results);
+        });
+    });
+
 // ============================================
 // Barbers API rute
 // ============================================
 
 /**
  * GET /api/barbers - Dohvati sve aktivne frizere (sa radnim vremenom)
+ * Salon_id se automatski postavlja iz subdomain-a
  */
-router.get("/", (req, res) => {
-    const sql =
-        "SELECT id, name, image_url, title, bio, is_active, work_days, TIME_FORMAT(work_start, '%H:%i') as work_start, TIME_FORMAT(work_end, '%H:%i') as work_end FROM barbers WHERE is_active = TRUE ORDER BY name";
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error("Greška pri dohvatanju frizera:", err);
-            return res
-                .status(500)
-                .json({ error: "Greška pri dohvatanju frizera" });
-        }
+router.get("/", async (req, res, next) => {
+    try {
+        const salonId = req.salonId;
+        const sql =
+            "SELECT id, name, image_url, title, bio, is_active, work_days, TIME_FORMAT(work_start, '%H:%i') as work_start, TIME_FORMAT(work_end, '%H:%i') as work_end FROM barbers WHERE is_active = TRUE AND salon_id = ? ORDER BY name";
+        const results = await query(sql, [salonId]);
         res.json(results);
-    });
+    } catch (err) {
+        console.error("Greška pri dohvatanju frizera:", err);
+        return next(new AppError("Greška pri dohvatanju frizera", 500));
+    }
 });
 
 /**
  * GET /api/barbers/all - Dohvati sve frizere (admin)
+ * Salon_id se automatski postavlja iz subdomain-a
  */
-router.get("/all", authenticate, (req, res) => {
-    if (!req.user.isAdmin) {
-        return res.status(403).json({ error: "Nemaš dozvolu" });
-    }
-
-    const sql =
-        "SELECT id, name, image_url, title, bio, is_active, work_days, TIME_FORMAT(work_start, '%H:%i') as work_start, TIME_FORMAT(work_end, '%H:%i') as work_end FROM barbers ORDER BY name";
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error("Greška pri dohvatanju frizera:", err);
-            return res
-                .status(500)
-                .json({ error: "Greška pri dohvatanju frizera" });
+router.get("/all", authenticate, async (req, res, next) => {
+    try {
+        if (!req.user.isAdmin) {
+            return next(new AppError("Nemaš dozvolu", 403));
         }
+
+        const salonId = req.salonId;
+        const sql =
+            "SELECT id, name, image_url, title, bio, is_active, work_days, TIME_FORMAT(work_start, '%H:%i') as work_start, TIME_FORMAT(work_end, '%H:%i') as work_end FROM barbers WHERE salon_id = ? ORDER BY name";
+        const results = await query(sql, [salonId]);
         res.json(results);
-    });
+    } catch (err) {
+        console.error("Greška pri dohvatanju frizera:", err);
+        return next(new AppError("Greška pri dohvatanju frizera", 500));
+    }
 });
 
 /**
@@ -92,13 +102,13 @@ router.post(
     "/upload-image",
     authenticate,
     upload.single("image"),
-    (req, res) => {
+    (req, res, next) => {
         if (!req.user.isAdmin) {
-            return res.status(403).json({ error: "Nemaš dozvolu" });
+            return next(new AppError("Nemaš dozvolu", 403));
         }
 
         if (!req.file) {
-            return res.status(400).json({ error: "Niste odabrali sliku" });
+            return next(new AppError("Niste odabrali sliku", 400));
         }
 
         const imageUrl = `/uploads/${req.file.filename}`;
@@ -109,23 +119,23 @@ router.post(
 /**
  * POST /api/barbers - Kreiraj novog frizera (admin)
  */
-router.post("/", authenticate, (req, res) => {
-    if (!req.user.isAdmin) {
-        return res.status(403).json({ error: "Nemaš dozvolu" });
-    }
+router.post("/", authenticate, async (req, res, next) => {
+    try {
+        if (!req.user.isAdmin) {
+            return next(new AppError("Nemaš dozvolu", 403));
+        }
 
-    const { name, image_url, title, bio, work_days, work_start, work_end } =
-        req.body;
+        const { name, image_url, title, bio, work_days, work_start, work_end } =
+            req.body;
 
-    if (!name || !name.trim()) {
-        return res.status(400).json({ error: "Ime frizera je obavezno" });
-    }
+        if (!name || !name.trim()) {
+            return next(new AppError("Ime frizera je obavezno", 400));
+        }
 
-    const sql =
-        "INSERT INTO barbers (name, image_url, title, bio, work_days, work_start, work_end) VALUES (?, ?, ?, ?, ?, ?, ?)";
-    db.query(
-        sql,
-        [
+        const salonId = req.salonId;
+        const sql =
+            "INSERT INTO barbers (name, image_url, title, bio, work_days, work_start, work_end, salon_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        const result = await query(sql, [
             name.trim(),
             image_url || null,
             title || null,
@@ -133,52 +143,48 @@ router.post("/", authenticate, (req, res) => {
             work_days || "1,2,3,4,5,6",
             work_start || "09:00",
             work_end || "17:00",
-        ],
-        (err, result) => {
-            if (err) {
-                console.error("Greška pri kreiranju frizera:", err);
-                return res
-                    .status(500)
-                    .json({ error: "Greška pri kreiranju frizera" });
-            }
-            res.status(201).json({
-                success: true,
-                message: "Frizer uspešno kreiran",
-                id: result.insertId,
-            });
-        },
-    );
+            salonId,
+        ]);
+        res.status(201).json({
+            success: true,
+            message: "Frizer uspešno kreiran",
+            id: result.insertId,
+        });
+    } catch (err) {
+        console.error("Greška pri kreiranju frizera:", err);
+        return next(new AppError("Greška pri kreiranju frizera", 500));
+    }
 });
 
 /**
  * PUT /api/barbers/:id - Izmeni frizera (admin)
  */
-router.put("/:id", authenticate, (req, res) => {
-    if (!req.user.isAdmin) {
-        return res.status(403).json({ error: "Nemaš dozvolu" });
-    }
+router.put("/:id", authenticate, async (req, res, next) => {
+    try {
+        if (!req.user.isAdmin) {
+            return next(new AppError("Nemaš dozvolu", 403));
+        }
 
-    const { id } = req.params;
-    const {
-        name,
-        image_url,
-        title,
-        bio,
-        is_active,
-        work_days,
-        work_start,
-        work_end,
-    } = req.body;
+        const { id } = req.params;
+        const {
+            name,
+            image_url,
+            title,
+            bio,
+            is_active,
+            work_days,
+            work_start,
+            work_end,
+        } = req.body;
 
-    if (!name || !name.trim()) {
-        return res.status(400).json({ error: "Ime frizera je obavezno" });
-    }
+        if (!name || !name.trim()) {
+            return next(new AppError("Ime frizera je obavezno", 400));
+        }
 
-    const sql =
-        "UPDATE barbers SET name = ?, image_url = ?, title = ?, bio = ?, is_active = ?, work_days = ?, work_start = ?, work_end = ? WHERE id = ?";
-    db.query(
-        sql,
-        [
+        const salonId = req.salonId;
+        const sql =
+            "UPDATE barbers SET name = ?, image_url = ?, title = ?, bio = ?, is_active = ?, work_days = ?, work_start = ?, work_end = ? WHERE id = ? AND salon_id = ?";
+        const result = await query(sql, [
             name.trim(),
             image_url || null,
             title || null,
@@ -188,45 +194,42 @@ router.put("/:id", authenticate, (req, res) => {
             work_start || "09:00",
             work_end || "17:00",
             id,
-        ],
-        (err, result) => {
-            if (err) {
-                console.error("Greška pri izmeni frizera:", err);
-                return res
-                    .status(500)
-                    .json({ error: "Greška pri izmeni frizera" });
-            }
-            if (result.affectedRows === 0) {
-                return res.status(404).json({ error: "Frizer nije pronađen" });
-            }
-            res.json({ success: true, message: "Frizer uspešno izmenjen" });
-        },
-    );
+            salonId,
+        ]);
+
+        if (result.affectedRows === 0) {
+            return next(new AppError("Frizer nije pronađen", 404));
+        }
+        res.json({ success: true, message: "Frizer uspešno izmenjen" });
+    } catch (err) {
+        console.error("Greška pri izmeni frizera:", err);
+        return next(new AppError("Greška pri izmeni frizera", 500));
+    }
 });
 
 /**
  * DELETE /api/barbers/:id - Obriši frizera (admin)
  */
-router.delete("/:id", authenticate, (req, res) => {
-    if (!req.user.isAdmin) {
-        return res.status(403).json({ error: "Nemaš dozvolu" });
-    }
-
-    const { id } = req.params;
-
-    const sql = "DELETE FROM barbers WHERE id = ?";
-    db.query(sql, [id], (err, result) => {
-        if (err) {
-            console.error("Greška pri brisanju frizera:", err);
-            return res
-                .status(500)
-                .json({ error: "Greška pri brisanju frizera" });
+router.delete("/:id", authenticate, async (req, res, next) => {
+    try {
+        if (!req.user.isAdmin) {
+            return next(new AppError("Nemaš dozvolu", 403));
         }
+
+        const { id } = req.params;
+        const salonId = req.salonId;
+
+        const sql = "DELETE FROM barbers WHERE id = ? AND salon_id = ?";
+        const result = await query(sql, [id, salonId]);
+
         if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Frizer nije pronađen" });
+            return next(new AppError("Frizer nije pronađen", 404));
         }
         res.json({ success: true, message: "Frizer uspešno obrisan" });
-    });
+    } catch (err) {
+        console.error("Greška pri brisanju frizera:", err);
+        return next(new AppError("Greška pri brisanju frizera", 500));
+    }
 });
 
 module.exports = router;

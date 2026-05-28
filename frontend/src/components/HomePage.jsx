@@ -30,8 +30,18 @@ const LoadingSkeleton = () => (
     </div>
 );
 
-const HomePage = ({ onNavigate }) => {
-    const { name, tagline, description, contact } = salonConfig;
+const HomePage = ({ onNavigate, salon }) => {
+    // Koristi dinamičke podatke iz baze, ili podrazumevane iz salonConfig
+    const name = salon?.name || salonConfig.name;
+    const tagline = salon?.tagline || salonConfig.tagline;
+    const description = salon?.description || salonConfig.description;
+    const contact = {
+        phone: salon?.phone || salonConfig.contact.phone,
+        email: salon?.email || salonConfig.contact.email,
+        address: salon?.address || salonConfig.contact.address,
+    };
+    const heroImageUrl = salon?.hero_image_url || null;
+
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -53,8 +63,15 @@ const HomePage = ({ onNavigate }) => {
         <>
             {/* Hero sekcija */}
             <SectionWrapper
-                background="bg-gradient-to-br from-amber-500 to-orange-600"
+                background={heroImageUrl ? "" : "bg-gradient-primary-solid"}
                 padding="pt-28 pb-20"
+                customStyle={
+                    heroImageUrl
+                        ? {
+                              background: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${heroImageUrl}) center/cover`,
+                          }
+                        : undefined
+                }
             >
                 <div className="text-center text-white relative">
                     {/* Dekorativni elementi */}
@@ -69,26 +86,64 @@ const HomePage = ({ onNavigate }) => {
                         {name}
                     </h1>
                     <p
-                        className="text-xl md:text-2xl text-amber-100 mb-6 animate-fade-in-up"
+                        className="text-xl md:text-2xl opacity-90 mb-6 animate-fade-in-up"
                         style={{ animationDelay: "0.1s" }}
                     >
                         {tagline}
                     </p>
                     <p
-                        className="text-lg text-amber-50 max-w-2xl mx-auto mb-8 animate-fade-in-up"
+                        className="text-lg opacity-80 max-w-2xl mx-auto mb-8 animate-fade-in-up"
                         style={{ animationDelay: "0.2s" }}
                     >
                         {description}
                     </p>
                     <button
                         onClick={() => onNavigate("/zakazi")}
-                        className="bg-white text-amber-700 px-8 py-3 rounded-full font-semibold text-lg hover:bg-amber-50 transition-all shadow-lg hover:shadow-xl active:scale-[0.98] animate-fade-in-up"
+                        className="bg-white text-primary-hover px-8 py-3 rounded-full font-semibold text-lg hover:bg-primary-light transition-all shadow-lg hover:shadow-xl active:scale-[0.98] animate-fade-in-up"
                         style={{ animationDelay: "0.3s" }}
                     >
                         Zakažite termin
                     </button>
                 </div>
             </SectionWrapper>
+            {/* Kontakt sekcija */}
+            <div id="kontakt">
+                <SectionWrapper
+                    title="Kontaktirajte nas"
+                    subtitle="Tu smo za sva vaša pitanja"
+                    background="bg-neutral"
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+                            <div className="text-4xl mb-3">📞</div>
+                            <h3 className="font-semibold text-primary-dark mb-2">
+                                Telefon
+                            </h3>
+                            <p className="text-primary-light">
+                                {contact.phone}
+                            </p>
+                        </div>
+                        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+                            <div className="text-4xl mb-3">📧</div>
+                            <h3 className="font-semibold text-primary-dark mb-2">
+                                Email
+                            </h3>
+                            <p className="text-primary-light">
+                                {contact.email}
+                            </p>
+                        </div>
+                        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+                            <div className="text-4xl mb-3">📍</div>
+                            <h3 className="font-semibold text-primary-dark mb-2">
+                                Adresa
+                            </h3>
+                            <p className="text-primary-light">
+                                {contact.address}
+                            </p>
+                        </div>
+                    </div>
+                </SectionWrapper>
+            </div>
 
             {/* Usluge sekcija */}
             <div id="usluge">
@@ -124,39 +179,6 @@ const HomePage = ({ onNavigate }) => {
             {/* Testimonijali */}
             <div id="utisci">
                 <Testimonials />
-            </div>
-
-            {/* Kontakt sekcija */}
-            <div id="kontakt">
-                <SectionWrapper
-                    title="Kontaktirajte nas"
-                    subtitle="Tu smo za sva vaša pitanja"
-                    background="bg-gray-50"
-                >
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
-                            <div className="text-4xl mb-3">📞</div>
-                            <h3 className="font-semibold text-gray-800 mb-2">
-                                Telefon
-                            </h3>
-                            <p className="text-gray-600">{contact.phone}</p>
-                        </div>
-                        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
-                            <div className="text-4xl mb-3">📧</div>
-                            <h3 className="font-semibold text-gray-800 mb-2">
-                                Email
-                            </h3>
-                            <p className="text-gray-600">{contact.email}</p>
-                        </div>
-                        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
-                            <div className="text-4xl mb-3">📍</div>
-                            <h3 className="font-semibold text-gray-800 mb-2">
-                                Adresa
-                            </h3>
-                            <p className="text-gray-600">{contact.address}</p>
-                        </div>
-                    </div>
-                </SectionWrapper>
             </div>
         </>
     );

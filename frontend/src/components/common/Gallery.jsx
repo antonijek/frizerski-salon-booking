@@ -50,7 +50,7 @@ const Gallery = () => {
         <SectionWrapper
             title={gallery.title}
             subtitle={gallery.subtitle}
-            background="bg-gray-50"
+            background="bg-neutral"
         >
             {/* Grid slika - centriran u svakom redu */}
             <div className="flex flex-wrap justify-center gap-4">
@@ -78,7 +78,7 @@ const Gallery = () => {
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                             <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center backdrop-blur-sm">
                                 <svg
-                                    className="w-6 h-6 text-gray-800"
+                                    className="w-6 h-6 text-primary-dark"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"

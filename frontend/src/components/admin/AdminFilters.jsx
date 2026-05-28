@@ -30,8 +30,8 @@ const AdminFilters = ({
                         }}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                             filter === f.key && !selectedDate
-                                ? "bg-amber-600 text-white"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                ? "bg-primary text-white"
+                                : "bg-neutral text-primary-dark hover:bg-primary-light"
                         }`}
                     >
                         {f.label}
@@ -42,7 +42,7 @@ const AdminFilters = ({
             {/* Filter inputi */}
             <div className="flex flex-wrap gap-3 mb-6 items-end">
                 <div>
-                    <label className="block text-xs text-gray-500 mb-1">
+                    <label className="block text-xs text-primary-light mb-1">
                         Datum
                     </label>
                     <input
@@ -52,18 +52,18 @@ const AdminFilters = ({
                             setSelectedDate(e.target.value);
                             if (e.target.value) setFilter("all");
                         }}
-                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                     />
                 </div>
 
                 <div>
-                    <label className="block text-xs text-gray-500 mb-1">
+                    <label className="block text-xs text-primary-light mb-1">
                         Frizer
                     </label>
                     <select
                         value={selectedBarber}
                         onChange={(e) => setSelectedBarber(e.target.value)}
-                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                     >
                         <option value="all">Svi frizeri</option>
                         {barbers.map((barber) => (
@@ -76,7 +76,7 @@ const AdminFilters = ({
 
                 <button
                     onClick={onRefresh}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm"
+                    className="px-4 py-2 bg-neutral text-primary-dark rounded-lg hover:bg-primary-light transition text-sm"
                     title="Osveži"
                 >
                     🔄 Osveži
@@ -85,7 +85,7 @@ const AdminFilters = ({
                 {showReset && (
                     <button
                         onClick={onReset}
-                        className="px-4 py-2 bg-gray-100 text-gray-500 rounded-lg hover:bg-gray-200 transition text-sm"
+                        className="px-4 py-2 bg-neutral text-primary-light rounded-lg hover:bg-primary-light transition text-sm"
                     >
                         ✕ Poništi filtere
                     </button>

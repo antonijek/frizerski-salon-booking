@@ -37,12 +37,12 @@ const UsersTab = () => {
             <NotificationBanner type="success" message={successMessage} />
 
             <div className="flex justify-between items-center mb-6">
-                <p className="text-gray-500 text-sm">
+                <p className="text-primary-light text-sm">
                     {users.length} registrovanih korisnika
                 </p>
                 <button
                     onClick={fetchUsers}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm"
+                    className="px-4 py-2 bg-neutral text-primary-dark rounded-lg hover:bg-primary-light transition text-sm"
                 >
                     🔄 Osveži
                 </button>
@@ -55,23 +55,23 @@ const UsersTab = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="bg-gray-50 border-b">
-                                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">
+                                <tr className="bg-neutral border-b">
+                                    <th className="text-left px-4 py-3 text-sm font-semibold text-primary-dark">
                                         Ime
                                     </th>
-                                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">
+                                    <th className="text-left px-4 py-3 text-sm font-semibold text-primary-dark">
                                         Email
                                     </th>
-                                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">
+                                    <th className="text-left px-4 py-3 text-sm font-semibold text-primary-dark">
                                         Telefon
                                     </th>
-                                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">
+                                    <th className="text-left px-4 py-3 text-sm font-semibold text-primary-dark">
                                         Uloga
                                     </th>
-                                    <th className="text-left px-4 py-3 text-sm font-semibold text-gray-700">
+                                    <th className="text-left px-4 py-3 text-sm font-semibold text-primary-dark">
                                         Datum registracije
                                     </th>
-                                    <th className="text-right px-4 py-3 text-sm font-semibold text-gray-700">
+                                    <th className="text-right px-4 py-3 text-sm font-semibold text-primary-dark">
                                         Akcija
                                     </th>
                                 </tr>
@@ -80,29 +80,29 @@ const UsersTab = () => {
                                 {users.map((user) => (
                                     <tr
                                         key={user.id}
-                                        className="hover:bg-gray-50 transition"
+                                        className="hover:bg-primary-light transition"
                                     >
-                                        <td className="px-4 py-3 text-sm text-gray-800">
+                                        <td className="px-4 py-3 text-sm text-primary-dark">
                                             {user.name}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                        <td className="px-4 py-3 text-sm text-primary-light">
                                             {user.email}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                        <td className="px-4 py-3 text-sm text-primary-light">
                                             {user.phone || "-"}
                                         </td>
                                         <td className="px-4 py-3 text-sm">
                                             {user.is_admin ? (
-                                                <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                                                <span className="bg-primary-light text-primary-hover px-2 py-0.5 rounded-full text-xs font-medium">
                                                     Admin
                                                 </span>
                                             ) : (
-                                                <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">
+                                                <span className="bg-neutral text-primary-light px-2 py-0.5 rounded-full text-xs">
                                                     Korisnik
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                        <td className="px-4 py-3 text-sm text-primary-light">
                                             {new Date(
                                                 user.created_at,
                                             ).toLocaleDateString("sr-RS", {
@@ -119,7 +119,7 @@ const UsersTab = () => {
                                                     onClick={() =>
                                                         openEditForm(user)
                                                     }
-                                                    className="text-amber-600 hover:text-amber-800 transition text-sm"
+                                                    className="text-primary hover:text-primary-hover transition text-sm"
                                                     title="Izmeni korisnika"
                                                 >
                                                     ✏️
@@ -151,7 +151,7 @@ const UsersTab = () => {
             >
                 <form onSubmit={handleEditSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-primary-dark mb-1">
                             Ime *
                         </label>
                         <input
@@ -159,11 +159,11 @@ const UsersTab = () => {
                             name="name"
                             value={editForm.name}
                             onChange={handleEditChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-primary-dark mb-1">
                             Email *
                         </label>
                         <input
@@ -171,11 +171,11 @@ const UsersTab = () => {
                             name="email"
                             value={editForm.email}
                             onChange={handleEditChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-primary-dark mb-1">
                             Telefon
                         </label>
                         <input
@@ -183,7 +183,7 @@ const UsersTab = () => {
                             name="phone"
                             value={editForm.phone}
                             onChange={handleEditChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                         />
                     </div>
                     <div className="flex items-center gap-3">
@@ -193,11 +193,11 @@ const UsersTab = () => {
                             id="is_admin"
                             checked={editForm.is_admin}
                             onChange={handleEditChange}
-                            className="w-5 h-5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                            className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
                         />
                         <label
                             htmlFor="is_admin"
-                            className="text-sm font-medium text-gray-700"
+                            className="text-sm font-medium text-primary-dark"
                         >
                             Admin korisnik
                         </label>
@@ -206,14 +206,14 @@ const UsersTab = () => {
                         <button
                             type="button"
                             onClick={closeEditForm}
-                            className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
+                            className="flex-1 py-2 border border-gray-300 text-primary-dark rounded-lg hover:bg-primary-light transition font-medium"
                         >
                             Odustani
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
-                            className="flex-1 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {saving ? "Čuvanje..." : "Sačuvaj izmene"}
                         </button>

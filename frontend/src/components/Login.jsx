@@ -39,10 +39,10 @@ const Login = ({ onNavigate }) => {
             <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
                 <div className="text-center mb-8">
                     <div className="text-5xl mb-4">🔐</div>
-                    <h2 className="text-2xl font-bold text-gray-800">
+                    <h2 className="text-2xl font-bold text-primary-dark">
                         Prijava
                     </h2>
-                    <p className="text-gray-500 mt-1">
+                    <p className="text-primary-light mt-1">
                         Prijavite se na vaš nalog
                     </p>
                 </div>
@@ -55,7 +55,7 @@ const Login = ({ onNavigate }) => {
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-primary-dark mb-1">
                             Email
                         </label>
                         <input
@@ -65,12 +65,12 @@ const Login = ({ onNavigate }) => {
                             onChange={handleChange}
                             required
                             placeholder="vase@email.com"
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-primary-dark mb-1">
                             Lozinka
                         </label>
                         <input
@@ -80,24 +80,24 @@ const Login = ({ onNavigate }) => {
                             onChange={handleChange}
                             required
                             placeholder="••••••••"
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
                         />
                     </div>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-amber-600 text-white py-2.5 rounded-lg font-semibold hover:bg-amber-700 transition disabled:opacity-50"
+                        className="w-full bg-primary text-white py-2.5 rounded-lg font-semibold hover:bg-primary-hover transition disabled:opacity-50"
                     >
                         {loading ? "Prijavljivanje..." : "Prijavi se"}
                     </button>
                 </form>
 
-                <div className="mt-6 text-center text-sm text-gray-500">
+                <div className="mt-6 text-center text-sm text-primary-light">
                     Nemate nalog?{" "}
                     <button
                         onClick={() => onNavigate("/register")}
-                        className="text-amber-600 hover:text-amber-700 font-medium"
+                        className="text-primary hover:text-primary-hover font-medium"
                     >
                         Registrujte se
                     </button>

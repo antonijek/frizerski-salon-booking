@@ -31,7 +31,7 @@ const BookingForm = ({ onNavigate }) => {
 
     return (
         <div className="bg-white rounded-2xl shadow-xl p-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-6">
+            <h2 className="text-3xl font-bold text-primary-dark mb-6">
                 Zakažite termin
             </h2>
 
@@ -101,7 +101,7 @@ const BookingForm = ({ onNavigate }) => {
 
                 {/* Usluga */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-primary-dark mb-1">
                         Usluga *
                     </label>
                     <select
@@ -109,7 +109,7 @@ const BookingForm = ({ onNavigate }) => {
                         value={values.service}
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none ${
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none ${
                             touched.service && errors.service
                                 ? "border-red-300 bg-red-50"
                                 : "border-gray-300"
@@ -132,14 +132,14 @@ const BookingForm = ({ onNavigate }) => {
 
                 {/* Izbor frizera (opciono) */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-primary-dark mb-1">
                         Željeni frizer (opciono)
                     </label>
                     <select
                         name="barber_id"
                         value={values.barber_id || ""}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                     >
                         <option value="">Bilo koji frizer</option>
                         {barbers.map((barber) => (
@@ -152,7 +152,7 @@ const BookingForm = ({ onNavigate }) => {
                         ))}
                     </select>
                     {selectedBarber && (
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-xs text-primary-light">
                             Radno vreme: {selectedBarber.work_start || "?"} -{" "}
                             {selectedBarber.work_end || "?"}
                         </p>
@@ -161,7 +161,7 @@ const BookingForm = ({ onNavigate }) => {
 
                 {/* Upozorenje ako datum nije radni dan */}
                 {values.date && !isDateAvailable(values.date) && (
-                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+                    <div className="p-3 bg-primary-light border border-primary-light rounded-lg text-sm text-primary-hover">
                         ⚠️{" "}
                         {selectedBarber
                             ? "Izabrani frizer ne radi na ovaj dan. Izaberite drugi datum ili drugog frizera."
@@ -176,7 +176,7 @@ const BookingForm = ({ onNavigate }) => {
                         loading ||
                         (values.date && !isDateAvailable(values.date))
                     }
-                    className="w-full bg-amber-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-amber-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-primary text-white py-3 rounded-lg font-semibold text-lg hover:bg-primary-hover transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {loading ? "Zakazivanje..." : "Zakaži termin"}
                 </button>

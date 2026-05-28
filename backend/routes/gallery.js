@@ -11,6 +11,7 @@ try {
     console.log("Sharp nije dostupan - optimizacija slika preskočena");
 }
 const { authenticate } = require("../middleware/auth");
+const AppError = require("../utils/AppError");
 
 // ============================================
 // Multer konfiguracija za upload slika
@@ -51,23 +52,89 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
 });
 
+// Helper: async query wrapper
+const query = (sql, params) =>
+    new Promise((resolve, reject) => {
+        db.query(sql, params, (err, results) => {
+            if (err) return reject(err);
+            resolve(results);
+        });
+    });
+
+// ============================================
+// Sharp optimizacija slike (fire-and-forget)
+// ============================================
+function optimizeImage(filename) {
+    if (!sharp) return;
+
+    try {
+        const filePath = path.join(uploadDir, filename);
+        const ext = path.extname(filename).toLowerCase();
+
+        if (ext === ".gif") return;
+
+        let sharpInstance = sharp(filePath).resize({
+            width: 1200,
+            withoutEnlargement: true,
+        });
+
+        if (ext === ".jpg" || ext === ".jpeg") {
+            sharpInstance = sharpInstance.jpeg({
+                quality: 80,
+                mozjpeg: true,
+            });
+        } else if (ext === ".png") {
+            sharpInstance = sharpInstance.png({
+                quality: 80,
+                compressionLevel: 9,
+            });
+        } else if (ext === ".webp") {
+            sharpInstance = sharpInstance.webp({ quality: 80 });
+        }
+
+        const optimizedPath = filePath.replace(/\.[^.]+$/, "-optimized" + ext);
+
+        sharpInstance
+            .toFile(optimizedPath)
+            .then((info) => {
+                try {
+                    fs.renameSync(optimizedPath, filePath);
+                    console.log(
+                        `Slika optimizovana: ${filename} (${info.size} bajtova)`,
+                    );
+                } catch (renameErr) {
+                    console.error(
+                        "Greška pri preimenovanju optimizovane slike:",
+                        renameErr,
+                    );
+                }
+            })
+            .catch((err) => {
+                console.error("Greška pri optimizaciji slike:", err);
+                try {
+                    if (fs.existsSync(optimizedPath))
+                        fs.unlinkSync(optimizedPath);
+                } catch (e) {}
+            });
+    } catch (sharpErr) {
+        console.error("Sharp greška (ne utiče na upload):", sharpErr);
+    }
+}
+
 // ============================================
 // Gallery API rute
 // ============================================
 
 /**
  * GET /api/gallery - Dohvati sve slike iz galerije
+ * Salon_id se automatski postavlja iz subdomain-a
  */
-router.get("/", (req, res) => {
-    const sql =
-        "SELECT id, src, alt, sort_order FROM gallery_images ORDER BY sort_order ASC, created_at DESC";
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error("Greška pri dohvatanju galerije:", err);
-            return res
-                .status(500)
-                .json({ error: "Greška pri dohvatanju galerije" });
-        }
+router.get("/", async (req, res, next) => {
+    try {
+        const salonId = req.salonId;
+        const sql =
+            "SELECT id, src, alt, sort_order FROM gallery_images WHERE salon_id = ? ORDER BY sort_order ASC, created_at DESC";
+        const results = await query(sql, [salonId]);
         // Dodaj pun URL za slike koje su uploadovane
         const baseUrl = `${req.protocol}://${req.get("host")}`;
         const images = results.map((img) => ({
@@ -75,244 +142,159 @@ router.get("/", (req, res) => {
             src: img.src.startsWith("http") ? img.src : `${baseUrl}${img.src}`,
         }));
         res.json(images);
-    });
+    } catch (err) {
+        console.error("Greška pri dohvatanju galerije:", err);
+        return next(new AppError("Greška pri dohvatanju galerije", 500));
+    }
 });
 
 /**
  * POST /api/gallery/upload - Dodaj novu sliku uploadom fajla (admin)
  */
-router.post("/upload", authenticate, upload.single("image"), (req, res) => {
-    if (!req.user.isAdmin) {
-        return res.status(403).json({ error: "Nemaš dozvolu" });
-    }
-
-    if (!req.file) {
-        return res.status(400).json({ error: "Fajl nije uploadovan" });
-    }
-
-    const src = `/uploads/${req.file.filename}`;
-    const alt = req.body.alt || req.file.originalname.replace(/\.[^/.]+$/, "");
-
-    if (!alt || !alt.trim()) {
-        return res.status(400).json({ error: "Naziv slike je obavezan" });
-    }
-
-    // ============================================
-    // Optimizacija slike sa Sharp-om (ne blokira odgovor)
-    // ============================================
-    if (sharp) {
+router.post(
+    "/upload",
+    authenticate,
+    upload.single("image"),
+    async (req, res, next) => {
         try {
-            const filePath = path.join(uploadDir, req.file.filename);
-            const ext = path.extname(req.file.filename).toLowerCase();
-
-            // Samo za JPG, PNG i WebP - GIF preskačemo
-            if (ext !== ".gif") {
-                let sharpInstance = sharp(filePath).resize({
-                    width: 1200,
-                    withoutEnlargement: true,
-                });
-
-                // Primeni odgovarajuću kompresiju na osnovu formata
-                if (ext === ".jpg" || ext === ".jpeg") {
-                    sharpInstance = sharpInstance.jpeg({
-                        quality: 80,
-                        mozjpeg: true,
-                    });
-                } else if (ext === ".png") {
-                    sharpInstance = sharpInstance.png({
-                        quality: 80,
-                        compressionLevel: 9,
-                    });
-                } else if (ext === ".webp") {
-                    sharpInstance = sharpInstance.webp({ quality: 80 });
-                }
-
-                const optimizedPath = filePath.replace(
-                    /\.[^.]+$/,
-                    "-optimized" + ext,
-                );
-
-                sharpInstance
-                    .toFile(optimizedPath)
-                    .then((info) => {
-                        // Zameni original optimizovanom slikom
-                        try {
-                            fs.renameSync(optimizedPath, filePath);
-                            console.log(
-                                `Slika optimizovana: ${req.file.filename} (${info.size} bajtova)`,
-                            );
-                        } catch (renameErr) {
-                            console.error(
-                                "Greška pri preimenovanju optimizovane slike:",
-                                renameErr,
-                            );
-                        }
-                    })
-                    .catch((err) => {
-                        console.error("Greška pri optimizaciji slike:", err);
-                        try {
-                            if (fs.existsSync(optimizedPath))
-                                fs.unlinkSync(optimizedPath);
-                        } catch (e) {}
-                    });
+            if (!req.user.isAdmin) {
+                return next(new AppError("Nemaš dozvolu", 403));
             }
-        } catch (sharpErr) {
-            // Ako Sharp baci grešku, samo logujemo - slika je već uploadovana
-            console.error("Sharp greška (ne utiče na upload):", sharpErr);
-        }
-    }
 
-    // Dohvati max sort_order da dodamo na kraj
-    db.query(
-        "SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM gallery_images",
-        (err, rows) => {
-            if (err) {
-                console.error("Greška pri dohvatanju redosleda:", err);
-                return res
-                    .status(500)
-                    .json({ error: "Greška pri dodavanju slike" });
+            if (!req.file) {
+                return next(new AppError("Fajl nije uploadovan", 400));
             }
+
+            const src = `/uploads/${req.file.filename}`;
+            const alt =
+                req.body.alt || req.file.originalname.replace(/\.[^/.]+$/, "");
+
+            if (!alt || !alt.trim()) {
+                return next(new AppError("Naziv slike je obavezan", 400));
+            }
+
+            // Fire-and-forget Sharp optimizacija
+            optimizeImage(req.file.filename);
+
+            const salonId = req.salonId;
+            // Dohvati max sort_order da dodamo na kraj
+            const rows = await query(
+                "SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM gallery_images WHERE salon_id = ?",
+                [salonId],
+            );
 
             const nextOrder = rows[0].next_order;
-            const sql =
-                "INSERT INTO gallery_images (src, alt, sort_order) VALUES (?, ?, ?)";
-            db.query(
-                sql,
-                [src.trim(), alt.trim(), nextOrder],
-                (err, result) => {
-                    if (err) {
-                        console.error("Greška pri dodavanju slike:", err);
-                        return res
-                            .status(500)
-                            .json({ error: "Greška pri dodavanju slike" });
-                    }
-                    res.status(201).json({
-                        success: true,
-                        message: "Slika uspešno dodata",
-                        id: result.insertId,
-                    });
-                },
+            const result = await query(
+                "INSERT INTO gallery_images (src, alt, sort_order, salon_id) VALUES (?, ?, ?, ?)",
+                [src.trim(), alt.trim(), nextOrder, salonId],
             );
-        },
-    );
-});
+
+            res.status(201).json({
+                success: true,
+                message: "Slika uspešno dodata",
+                id: result.insertId,
+            });
+        } catch (err) {
+            console.error("Greška pri dodavanju slike:", err);
+            return next(new AppError("Greška pri dodavanju slike", 500));
+        }
+    },
+);
 
 /**
  * POST /api/gallery/url - Dodaj novu sliku putem URL-a (admin)
  */
-router.post("/url", authenticate, (req, res) => {
-    if (!req.user.isAdmin) {
-        return res.status(403).json({ error: "Nemaš dozvolu" });
+router.post("/url", authenticate, async (req, res, next) => {
+    try {
+        if (!req.user.isAdmin) {
+            return next(new AppError("Nemaš dozvolu", 403));
+        }
+
+        const { src, alt } = req.body;
+
+        if (!src || !src.trim()) {
+            return next(new AppError("URL slike je obavezan", 400));
+        }
+        if (!alt || !alt.trim()) {
+            return next(new AppError("Naziv slike je obavezan", 400));
+        }
+
+        const salonId = req.salonId;
+        // Dohvati max sort_order da dodamo na kraj
+        const rows = await query(
+            "SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM gallery_images WHERE salon_id = ?",
+            [salonId],
+        );
+
+        const nextOrder = rows[0].next_order;
+        const result = await query(
+            "INSERT INTO gallery_images (src, alt, sort_order, salon_id) VALUES (?, ?, ?, ?)",
+            [src.trim(), alt.trim(), nextOrder, salonId],
+        );
+
+        res.status(201).json({
+            success: true,
+            message: "Slika uspešno dodata",
+            id: result.insertId,
+        });
+    } catch (err) {
+        console.error("Greška pri dodavanju slike:", err);
+        return next(new AppError("Greška pri dodavanju slike", 500));
     }
-
-    const { src, alt } = req.body;
-
-    if (!src || !src.trim()) {
-        return res.status(400).json({ error: "URL slike je obavezan" });
-    }
-    if (!alt || !alt.trim()) {
-        return res.status(400).json({ error: "Naziv slike je obavezan" });
-    }
-
-    // Dohvati max sort_order da dodamo na kraj
-    db.query(
-        "SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM gallery_images",
-        (err, rows) => {
-            if (err) {
-                console.error("Greška pri dohvatanju redosleda:", err);
-                return res
-                    .status(500)
-                    .json({ error: "Greška pri dodavanju slike" });
-            }
-
-            const nextOrder = rows[0].next_order;
-            const sql =
-                "INSERT INTO gallery_images (src, alt, sort_order) VALUES (?, ?, ?)";
-            db.query(
-                sql,
-                [src.trim(), alt.trim(), nextOrder],
-                (err, result) => {
-                    if (err) {
-                        console.error("Greška pri dodavanju slike:", err);
-                        return res
-                            .status(500)
-                            .json({ error: "Greška pri dodavanju slike" });
-                    }
-                    res.status(201).json({
-                        success: true,
-                        message: "Slika uspešno dodata",
-                        id: result.insertId,
-                    });
-                },
-            );
-        },
-    );
 });
 
 /**
  * DELETE /api/gallery/:id - Obriši sliku (admin)
  */
-router.delete("/:id", authenticate, (req, res) => {
-    if (!req.user.isAdmin) {
-        return res.status(403).json({ error: "Nemaš dozvolu" });
-    }
+router.delete("/:id", authenticate, async (req, res, next) => {
+    try {
+        if (!req.user.isAdmin) {
+            return next(new AppError("Nemaš dozvolu", 403));
+        }
 
-    const { id } = req.params;
+        const { id } = req.params;
+        const salonId = req.salonId;
 
-    // Prvo dohvati src da obrišemo fajl ako je uploadovan
-    db.query(
-        "SELECT src FROM gallery_images WHERE id = ?",
-        [id],
-        (err, rows) => {
-            if (err) {
-                console.error("Greška pri dohvatanju slike:", err);
-                return res
-                    .status(500)
-                    .json({ error: "Greška pri brisanju slike" });
-            }
-            if (rows.length === 0) {
-                return res.status(404).json({ error: "Slika nije pronađena" });
-            }
+        // Prvo dohvati src da obrišemo fajl ako je uploadovan
+        const rows = await query(
+            "SELECT src FROM gallery_images WHERE id = ? AND salon_id = ?",
+            [id, salonId],
+        );
 
-            const src = rows[0].src;
+        if (rows.length === 0) {
+            return next(new AppError("Slika nije pronađena", 404));
+        }
 
-            // Obriši iz baze
-            db.query(
-                "DELETE FROM gallery_images WHERE id = ?",
-                [id],
-                (err, result) => {
-                    if (err) {
-                        console.error("Greška pri brisanju slike:", err);
-                        return res
-                            .status(500)
-                            .json({ error: "Greška pri brisanju slike" });
-                    }
+        const imgSrc = rows[0].src;
 
-                    // Ako je uploadovan fajl, obriši ga sa diska
-                    if (src && src.startsWith("/uploads/")) {
-                        const filePath = path.join(
-                            __dirname,
-                            "..",
-                            src.replace(/^\//, ""),
-                        );
-                        fs.unlink(filePath, (err) => {
-                            if (err && err.code !== "ENOENT") {
-                                console.error(
-                                    "Greška pri brisanju fajla:",
-                                    err,
-                                );
-                            }
-                        });
-                    }
+        // Obriši iz baze
+        await query(
+            "DELETE FROM gallery_images WHERE id = ? AND salon_id = ?",
+            [id, salonId],
+        );
 
-                    res.json({
-                        success: true,
-                        message: "Slika uspešno obrisana",
-                    });
-                },
+        // Ako je uploadovan fajl, obriši ga sa diska
+        if (imgSrc && imgSrc.startsWith("/uploads/")) {
+            const filePath = path.join(
+                __dirname,
+                "..",
+                imgSrc.replace(/^\//, ""),
             );
-        },
-    );
+            fs.unlink(filePath, (err) => {
+                if (err && err.code !== "ENOENT") {
+                    console.error("Greška pri brisanju fajla:", err);
+                }
+            });
+        }
+
+        res.json({
+            success: true,
+            message: "Slika uspešno obrisana",
+        });
+    } catch (err) {
+        console.error("Greška pri brisanju slike:", err);
+        return next(new AppError("Greška pri brisanju slike", 500));
+    }
 });
 
 module.exports = router;

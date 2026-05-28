@@ -134,6 +134,43 @@ const authService = {
             );
         }
     },
+
+    /**
+     * Super admin ulazi u konkretan salon (switch context)
+     * @param {number} salonId - ID salona
+     * @returns {Promise<Object>} { token, salon: { id, name, subdomain }, message }
+     */
+    switchToSalon: async (salonId) => {
+        try {
+            const response = await requestInstance.post(
+                `/auth/switch-salon/${salonId}`,
+            );
+            return response.data;
+        } catch (error) {
+            throw (
+                error.response?.data || {
+                    error: "Greška pri prebacivanju u salon",
+                }
+            );
+        }
+    },
+
+    /**
+     * Super admin se vraća iz režima konkretnog salona
+     * @returns {Promise<Object>} { token, message }
+     */
+    switchBack: async () => {
+        try {
+            const response = await requestInstance.post("/auth/switch-back");
+            return response.data;
+        } catch (error) {
+            throw (
+                error.response?.data || {
+                    error: "Greška pri vraćanju na super admin režim",
+                }
+            );
+        }
+    },
 };
 
 export default authService;

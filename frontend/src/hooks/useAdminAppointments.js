@@ -3,17 +3,7 @@ import appointmentService from "../services/appointmentService";
 import serviceService from "../services/serviceService";
 import barberService from "../services/barberService";
 import salonConfig from "../config/salonConfig";
-
-const timeToMinutes = (time) => {
-    const [h, m] = time.split(":").map(Number);
-    return h * 60 + m;
-};
-
-const minutesToTime = (minutes) => {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
-};
+import { timeToMinutes, minutesToTime } from "../utils/timeUtils";
 
 const useAdminAppointments = () => {
     const [appointments, setAppointments] = useState([]);
@@ -184,144 +174,124 @@ const useAdminAppointments = () => {
     const allTimeSlots = generateTimeSlots();
     const timeSlots = filterSlotsByBarber(allTimeSlots);
 
-    // Dohvati zauzete termine za izabrani datum i frizera
-    useEffect(() => {
-        if (editForm.date) {
-            const fetchBookedTimes = async () => {
-                try {
-                    let data;
-                    if (editForm.barber_id) {
-                        data = await appointmentService.getByDateAndBarber(
-                            editForm.date,
-                            editForm.barber_id,
-                        );
-                    } else {
-                        data = await appointmentService.getByDate(
-                            editForm.date,
-                        );
+    // Dohvati zauzete termine za izabrani datum i frizera - izdvojeno u useCallback radi HMR podrske
+    const fetchBookedTimes = useCallback(async () => {
+        if (!editForm.date) return;
+        try {
+            let data;
+            if (editForm.barber_id) {
+                data = await appointmentService.getByDateAndBarber(
+                    editForm.date,
+                    editForm.barber_id,
+                );
+            } else {
+                data = await appointmentService.getByDate(editForm.date);
+            }
+
+            const blockedSlots = new Set();
+
+            if (editForm.barber_id) {
+                // Ako je izabran frizer, blokiraj sve njegove zauzete slotove
+                data.forEach((a) => {
+                    // Preskoči trenutni termin koji se edituje
+                    if (editingAppointment && a.id === editingAppointment.id)
+                        return;
+
+                    const startTime = a.time.slice(0, 5);
+                    const duration = a.duration || workingHours.interval;
+                    const startMinutes = timeToMinutes(startTime);
+                    const endMinutes = startMinutes + duration;
+                    for (
+                        let m = startMinutes;
+                        m < endMinutes;
+                        m += workingHours.interval
+                    ) {
+                        blockedSlots.add(minutesToTime(m));
                     }
+                });
+            } else {
+                // Ako nije izabran frizer, blokiraj samo slotove gde su SVI frizeri zauzeti
+                const slotBookings = {};
+                data.forEach((a) => {
+                    // Preskoči trenutni termin koji se edituje
+                    if (editingAppointment && a.id === editingAppointment.id)
+                        return;
 
-                    const blockedSlots = new Set();
-
-                    if (editForm.barber_id) {
-                        // Ako je izabran frizer, blokiraj sve njegove zauzete slotove
-                        data.forEach((a) => {
-                            // Preskoči trenutni termin koji se edituje
-                            if (
-                                editingAppointment &&
-                                a.id === editingAppointment.id
-                            )
-                                return;
-
-                            const startTime = a.time.slice(0, 5);
-                            const duration =
-                                a.duration || workingHours.interval;
-                            const startMinutes = timeToMinutes(startTime);
-                            const endMinutes = startMinutes + duration;
-                            for (
-                                let m = startMinutes;
-                                m < endMinutes;
-                                m += workingHours.interval
-                            ) {
-                                blockedSlots.add(minutesToTime(m));
-                            }
-                        });
-                    } else {
-                        // Ako nije izabran frizer, blokiraj samo slotove gde su SVI frizeri zauzeti
-                        const slotBookings = {};
-                        data.forEach((a) => {
-                            // Preskoči trenutni termin koji se edituje
-                            if (
-                                editingAppointment &&
-                                a.id === editingAppointment.id
-                            )
-                                return;
-
-                            const startTime = a.time.slice(0, 5);
-                            const duration =
-                                a.duration || workingHours.interval;
-                            const startMinutes = timeToMinutes(startTime);
-                            const endMinutes = startMinutes + duration;
-                            for (
-                                let m = startMinutes;
-                                m < endMinutes;
-                                m += workingHours.interval
-                            ) {
-                                const slot = minutesToTime(m);
-                                if (!slotBookings[slot]) {
-                                    slotBookings[slot] = new Set();
-                                }
-                                slotBookings[slot].add(a.barber_id);
-                            }
-                        });
-
-                        // Blokiraj samo slotove gde su SVI aktivni frizeri zauzeti
-                        // Uzimamo u obzir samo frizere koji su aktivni i rade na taj dan i u to vreme
-                        const dateStr = editForm.date;
-                        const date = new Date(dateStr + "T00:00:00");
-                        const dayOfWeek = date.getDay();
-                        const dbDay = dayOfWeek === 0 ? 7 : dayOfWeek;
-
-                        Object.entries(slotBookings).forEach(
-                            ([slot, bookedBarberIds]) => {
-                                // Za svaki slot, uzmi u obzir samo frizere koji rade u to vreme
-                                const slotMinutes = timeToMinutes(slot);
-                                const relevantBarberIds = barbers
-                                    .filter((b) => {
-                                        // Frizera racunamo samo ako je aktivan
-                                        if (b.is_active !== 1) return false;
-                                        // Proveri da li radi na ovaj dan
-                                        if (b.work_days) {
-                                            const workDays = b.work_days
-                                                .split(",")
-                                                .map((d) => d.trim());
-                                            if (
-                                                !workDays.includes(
-                                                    dbDay.toString(),
-                                                )
-                                            )
-                                                return false;
-                                        }
-                                        // Proveri da li radi u ovo vreme
-                                        if (b.work_start && b.work_end) {
-                                            const barberStart = timeToMinutes(
-                                                b.work_start,
-                                            );
-                                            const barberEnd = timeToMinutes(
-                                                b.work_end,
-                                            );
-                                            if (
-                                                slotMinutes < barberStart ||
-                                                slotMinutes >= barberEnd
-                                            )
-                                                return false;
-                                        }
-                                        return true;
-                                    })
-                                    .map((b) => b.id);
-
-                                // Ako nema relevantnih frizera (niko ne radi u ovo vreme), blokiraj slot
-                                if (relevantBarberIds.length === 0) {
-                                    blockedSlots.add(slot);
-                                    return;
-                                }
-
-                                const allBusy = relevantBarberIds.every((id) =>
-                                    bookedBarberIds.has(id),
-                                );
-                                if (allBusy) {
-                                    blockedSlots.add(slot);
-                                }
-                            },
-                        );
+                    const startTime = a.time.slice(0, 5);
+                    const duration = a.duration || workingHours.interval;
+                    const startMinutes = timeToMinutes(startTime);
+                    const endMinutes = startMinutes + duration;
+                    for (
+                        let m = startMinutes;
+                        m < endMinutes;
+                        m += workingHours.interval
+                    ) {
+                        const slot = minutesToTime(m);
+                        if (!slotBookings[slot]) {
+                            slotBookings[slot] = new Set();
+                        }
+                        slotBookings[slot].add(a.barber_id);
                     }
+                });
 
-                    setBookedTimes([...blockedSlots]);
-                } catch {
-                    setBookedTimes([]);
-                }
-            };
-            fetchBookedTimes();
+                // Blokiraj samo slotove gde su SVI aktivni frizeri zauzeti
+                // Uzimamo u obzir samo frizere koji su aktivni i rade na taj dan i u to vreme
+                const dateStr = editForm.date;
+                const date = new Date(dateStr + "T00:00:00");
+                const dayOfWeek = date.getDay();
+                const dbDay = dayOfWeek === 0 ? 7 : dayOfWeek;
+
+                Object.entries(slotBookings).forEach(
+                    ([slot, bookedBarberIds]) => {
+                        // Za svaki slot, uzmi u obzir samo frizere koji rade u to vreme
+                        const slotMinutes = timeToMinutes(slot);
+                        const relevantBarberIds = barbers
+                            .filter((b) => {
+                                // Frizera racunamo samo ako je aktivan
+                                if (b.is_active !== 1) return false;
+                                // Proveri da li radi na ovaj dan
+                                if (b.work_days) {
+                                    const workDays = b.work_days
+                                        .split(",")
+                                        .map((d) => d.trim());
+                                    if (!workDays.includes(dbDay.toString()))
+                                        return false;
+                                }
+                                // Proveri da li radi u ovo vreme
+                                if (b.work_start && b.work_end) {
+                                    const barberStart = timeToMinutes(
+                                        b.work_start,
+                                    );
+                                    const barberEnd = timeToMinutes(b.work_end);
+                                    if (
+                                        slotMinutes < barberStart ||
+                                        slotMinutes >= barberEnd
+                                    )
+                                        return false;
+                                }
+                                return true;
+                            })
+                            .map((b) => b.id);
+
+                        // Ako nema relevantnih frizera (niko ne radi u ovo vreme), blokiraj slot
+                        if (relevantBarberIds.length === 0) {
+                            blockedSlots.add(slot);
+                            return;
+                        }
+
+                        const allBusy = relevantBarberIds.every((id) =>
+                            bookedBarberIds.has(id),
+                        );
+                        if (allBusy) {
+                            blockedSlots.add(slot);
+                        }
+                    },
+                );
+            }
+
+            setBookedTimes([...blockedSlots]);
+        } catch {
+            setBookedTimes([]);
         }
     }, [
         editForm.date,
@@ -329,7 +299,14 @@ const useAdminAppointments = () => {
         editingAppointment,
         barbers,
         workingHours.interval,
+        setBookedTimes,
     ]);
+
+    useEffect(() => {
+        if (editForm.date) {
+            fetchBookedTimes();
+        }
+    }, [editForm.date, fetchBookedTimes]);
 
     const handleEditSubmit = async (e) => {
         e.preventDefault();
@@ -370,10 +347,12 @@ const useAdminAppointments = () => {
     // Filtrirani i sortirani termini
     const filteredAppointments = appointments
         .filter((app) => {
-            const today = new Date().toISOString().split("T")[0];
+            const now = new Date();
+            const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
             if (selectedDate) {
-                return app.date === selectedDate;
+                const match = app.date === selectedDate;
+                return match;
             }
 
             switch (filter) {

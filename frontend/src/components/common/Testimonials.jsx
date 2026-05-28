@@ -46,25 +46,25 @@ const Testimonials = () => {
         <SectionWrapper
             title={testimonials.title}
             subtitle={testimonials.subtitle}
-            background="bg-gray-50"
+            background="bg-neutral"
         >
             <div className="max-w-3xl mx-auto">
                 {/* Aktivni testimonial */}
-                <div className="bg-white rounded-2xl p-8 md:p-10 shadow-sm border border-gray-100 text-center relative">
+                <div className="bg-white rounded-2xl p-8 md:p-10 shadow-sm border border-primary-light text-center relative">
                     {/* Navicnik */}
-                    <div className="text-5xl text-amber-200 mb-4 font-serif leading-none">
+                    <div className="text-5xl text-primary-light mb-4 font-serif leading-none">
                         &ldquo;
                     </div>
 
                     <StarRating rating={items[activeIndex].rating} />
 
-                    <p className="text-gray-600 text-lg leading-relaxed mb-6 italic">
+                    <p className="text-primary-light text-lg leading-relaxed mb-6 italic">
                         &ldquo;{items[activeIndex].text}&rdquo;
                     </p>
 
-                    <div className="w-12 h-0.5 bg-amber-200 mx-auto mb-4" />
+                    <div className="w-12 h-0.5 bg-primary-light mx-auto mb-4" />
 
-                    <p className="font-semibold text-gray-800">
+                    <p className="font-semibold text-primary-dark">
                         {items[activeIndex].name}
                     </p>
 
@@ -72,7 +72,7 @@ const Testimonials = () => {
                     <div className="flex items-center justify-center gap-4 mt-8">
                         <button
                             onClick={handlePrev}
-                            className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 transition-all"
+                            className="w-10 h-10 rounded-full border border-primary-light flex items-center justify-center text-primary-light hover:bg-primary-light hover:text-primary hover:border-primary-light transition-all"
                         >
                             <svg
                                 className="w-5 h-5"
@@ -97,8 +97,8 @@ const Testimonials = () => {
                                     onClick={() => setActiveIndex(index)}
                                     className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
                                         index === activeIndex
-                                            ? "bg-amber-600 w-6"
-                                            : "bg-gray-300 hover:bg-gray-400"
+                                            ? "bg-primary w-6"
+                                            : "bg-neutral hover:bg-primary-light"
                                     }`}
                                 />
                             ))}
@@ -106,7 +106,7 @@ const Testimonials = () => {
 
                         <button
                             onClick={handleNext}
-                            className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 transition-all"
+                            className="w-10 h-10 rounded-full border border-primary-light flex items-center justify-center text-primary-light hover:bg-primary-light hover:text-primary hover:border-primary-light transition-all"
                         >
                             <svg
                                 className="w-5 h-5"

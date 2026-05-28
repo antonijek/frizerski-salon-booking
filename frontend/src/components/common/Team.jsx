@@ -83,7 +83,7 @@ const Team = () => {
                     >
                         {/* Slika */}
                         <div className="relative w-48 h-48 mx-auto mb-6">
-                            <div className="w-full h-full rounded-full overflow-hidden ring-4 ring-amber-100 group-hover:ring-amber-300 transition-all duration-300">
+                            <div className="w-full h-full rounded-full overflow-hidden ring-primary-light group-hover:ring-primary transition-all duration-300">
                                 {barber.image_url ? (
                                     <img
                                         src={barber.image_url}
@@ -92,7 +92,7 @@ const Team = () => {
                                         className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110"
                                     />
                                 ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
+                                    <div className="w-full h-full bg-gradient-primary-solid flex items-center justify-center">
                                         <span className="text-white text-3xl font-bold">
                                             {barber.name
                                                 .split(" ")
@@ -106,28 +106,28 @@ const Team = () => {
                                 )}
                             </div>
                             {/* Decorative dots */}
-                            <div className="absolute -top-2 -right-2 w-6 h-6 bg-amber-200 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                            <div className="absolute -bottom-1 -left-1 w-4 h-4 bg-amber-300 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100" />
+                            <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary-light rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <div className="absolute -bottom-1 -left-1 w-4 h-4 bg-primary-light rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100" />
                         </div>
 
                         {/* Info */}
-                        <h3 className="text-xl font-semibold text-gray-800 mb-1 group-hover:text-amber-700 transition-colors">
+                        <h3 className="text-xl font-semibold text-primary-dark mb-1 group-hover:text-primary-hover transition-colors">
                             {barber.name}
                         </h3>
                         {barber.title && (
-                            <p className="text-amber-600 font-medium text-sm mb-3">
+                            <p className="text-primary font-medium text-sm mb-3">
                                 {barber.title}
                             </p>
                         )}
                         {barber.bio && (
-                            <p className="text-gray-500 text-sm leading-relaxed max-w-xs mx-auto">
+                            <p className="text-primary-light text-sm leading-relaxed max-w-xs mx-auto">
                                 {barber.bio}
                             </p>
                         )}
 
                         {/* Radno vreme - mt-auto da bude u istom redu */}
                         {(barber.work_start || barber.work_days) && (
-                            <div className="mt-auto pt-4 space-y-1 text-sm text-gray-500">
+                            <div className="mt-auto pt-4 space-y-1 text-sm text-primary-light">
                                 {barber.work_start && barber.work_end && (
                                     <p className="flex items-center justify-center gap-1">
                                         <span>🕐</span>
