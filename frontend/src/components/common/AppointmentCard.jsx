@@ -58,7 +58,7 @@ const AppointmentCard = ({
                         <div className="flex items-center gap-2">
                             <span className="text-2xl">🧔</span>
                             <span className="text-primary-dark">
-                                {appointment.barber_name}
+                                Frizer: {appointment.barber_name}
                             </span>
                         </div>
                     )}
