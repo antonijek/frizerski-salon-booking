@@ -216,7 +216,9 @@ const AdminPanel = ({ onNavigate }) => {
             {activeTab === "appearance" && (
                 <AppearanceTab key={switchedSalonId || "default"} />
             )}
-            {activeTab === "salons" && <SaloniTab />}
+            {isSuperAdmin && !isSwitchedContext && activeTab === "salons" && (
+                <SaloniTab />
+            )}
         </div>
     );
 };

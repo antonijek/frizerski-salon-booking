@@ -61,7 +61,10 @@ ${salonName}
 
 function sendMail(to, subject, body, salonName) {
     const from = "knezantonije@gmail.com";
-    const emailContent = `From: ${salonName || "Frizerski salon"} <${from}>
+    // Prikaži ime salona u From headeru - Gmail koristi autentifikovani nalog,
+    // ali prikazuje display name
+    const displayName = salonName || "Frizerski salon";
+    const emailContent = `From: ${displayName} <${from}>
 To: ${to}
 Subject: ${subject}
 MIME-Version: 1.0

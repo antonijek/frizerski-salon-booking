@@ -54,6 +54,14 @@ const AppointmentCard = ({
                             {appointment.name}
                         </span>
                     </div>
+                    {appointment.barber_name && (
+                        <div className="flex items-center gap-2">
+                            <span className="text-2xl">🧔</span>
+                            <span className="text-primary-dark">
+                                {appointment.barber_name}
+                            </span>
+                        </div>
+                    )}
                     <div className="flex items-center gap-2">
                         <span className="text-2xl">📞</span>
                         <span className="text-primary-dark">
