@@ -92,6 +92,20 @@ async function create(salonId, data) {
         throw new AppError("Ne možete zakazati termin u prošlosti", 400);
     }
 
+    // Ne dozvoli zakazivanje u vreme koje je vec proslo za danas
+    if (date === localDate) {
+        const currentMinutes = today.getHours() * 60 + today.getMinutes();
+        const [h, m] = time.split(":").map(Number);
+        const timeMinutes = h * 60 + m;
+        // 30 minuta buffer-a za pripremu
+        if (timeMinutes < currentMinutes + 30) {
+            throw new AppError(
+                "Ne možete zakazati termin u vreme koje je već prošlo",
+                400,
+            );
+        }
+    }
+
     const durationResults = await query(
         "SELECT duration FROM services WHERE name = ? AND salon_id = ?",
         [service, salonId],
@@ -174,6 +188,20 @@ async function update(salonId, id, data) {
             "Ne možete izmeniti termin na datum u prošlosti",
             400,
         );
+    }
+
+    // Ne dozvoli izmenu na vreme koje je vec proslo za danas
+    if (date === localDate) {
+        const currentMinutes = today.getHours() * 60 + today.getMinutes();
+        const [h, m] = time.split(":").map(Number);
+        const timeMinutes = h * 60 + m;
+        // 30 minuta buffer-a za pripremu
+        if (timeMinutes < currentMinutes + 30) {
+            throw new AppError(
+                "Ne možete izmeniti termin na vreme koje je već prošlo",
+                400,
+            );
+        }
     }
 
     const existingResults = await query(

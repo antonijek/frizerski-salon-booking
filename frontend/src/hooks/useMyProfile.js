@@ -131,8 +131,36 @@ const useMyProfile = () => {
         });
     };
 
+    // Filtriraj slotove koji su prosli za danasnji dan
+    const filterPastSlots = (slots) => {
+        if (!editForm.date) return { slots, pastSlots: [] };
+
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+        if (editForm.date !== todayStr) return { slots, pastSlots: [] }; // samo za danas
+
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        // Dodajemo 30 minuta buffer-a da ostane vremena za pripremu
+        const bufferMinutes = currentMinutes + 30;
+
+        const pastSlots = [];
+        const futureSlots = [];
+        slots.forEach((slot) => {
+            const [h, m] = slot.split(":").map(Number);
+            const slotMinutes = h * 60 + m;
+            if (slotMinutes < bufferMinutes) {
+                pastSlots.push(slot);
+            } else {
+                futureSlots.push(slot);
+            }
+        });
+
+        return { slots: futureSlots, pastSlots };
+    };
+
     const allTimeSlots = generateTimeSlots();
-    const timeSlots = filterSlotsByBarber(allTimeSlots);
+    const { slots: filteredPastSlots } = filterPastSlots(allTimeSlots);
+    const timeSlots = filterSlotsByBarber(filteredPastSlots);
 
     // Dohvati zauzete termine za izabrani datum (osim trenutnog)
     useEffect(() => {
