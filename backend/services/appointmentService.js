@@ -62,7 +62,7 @@ async function getByDateAndBarber(salonId, date, barberId) {
 async function getByPhone(salonId, phone) {
     const cleanPhone = phone.replace(/\D/g, "");
     const sql =
-        "SELECT id, name, phone, email, DATE_FORMAT(date, '%Y-%m-%d') as date, time, service, barber_id, created_at FROM appointments WHERE salon_id = ? ORDER BY date DESC, time DESC";
+        "SELECT a.id, a.name, a.phone, a.email, DATE_FORMAT(a.date, '%Y-%m-%d') as date, a.time, a.service, a.barber_id, b.name as barber_name, a.created_at FROM appointments a LEFT JOIN barbers b ON a.barber_id = b.id WHERE a.salon_id = ? ORDER BY a.date DESC, a.time DESC";
     const results = await query(sql, [salonId]);
 
     return results.filter((a) => {
