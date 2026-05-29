@@ -3,7 +3,7 @@
 
 REMOTE_HOST="213.199.32.240"
 REMOTE_USER="root"
-REMOTE_DIR="/var/www/frizerski-salon"
+REMOTE_DIR="/var/www/html"
 DOMAIN="frizerski-salon.com"
 
 set -e
