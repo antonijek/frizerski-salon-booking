@@ -132,7 +132,7 @@ const AppearanceTab = () => {
     useEffect(() => {
         loadSalon();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [isSwitchedContext, switchedSalonId]);
 
     const loadSalon = async () => {
         setLoading(true);
