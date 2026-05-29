@@ -93,11 +93,14 @@ const AppearanceTab = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState(null);
-    const [heroUploadMode, setHeroUploadMode] = useState("url");
     const [heroSelectedFile, setHeroSelectedFile] = useState(null);
     const [heroPreview, setHeroPreview] = useState(null);
     const [heroUploading, setHeroUploading] = useState(false);
     const heroFileInputRef = useRef(null);
+    const [logoSelectedFile, setLogoSelectedFile] = useState(null);
+    const [logoPreview, setLogoPreview] = useState(null);
+    const [logoUploading, setLogoUploading] = useState(false);
+    const logoFileInputRef = useRef(null);
 
     /**
      * Odredi koji salon treba učitati na osnovu konteksta:
@@ -276,6 +279,40 @@ const AppearanceTab = () => {
         }
     };
 
+    const handleLogoFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setLogoSelectedFile(file);
+        const reader = new FileReader();
+        reader.onload = (e) => setLogoPreview(e.target.result);
+        reader.readAsDataURL(file);
+    };
+
+    const handleLogoUpload = async () => {
+        if (!logoSelectedFile) return;
+        setLogoUploading(true);
+        setMessage(null);
+        const formData = new FormData();
+        formData.append("image", logoSelectedFile);
+        try {
+            const result = await salonService.logoUpload(formData);
+            if (result.success && result.url) {
+                setForm((prev) => ({ ...prev, logo_url: result.url }));
+                setMessage({ type: "success", text: "Logo uploadovan! Sačuvajte izgled." });
+                setLogoSelectedFile(null);
+                setLogoPreview(null);
+                if (logoFileInputRef.current) logoFileInputRef.current.value = "";
+            } else {
+                setMessage({ type: "error", text: result.error || "Greška pri uploadu logotipa" });
+            }
+        } catch (err) {
+            setMessage({ type: "error", text: err.error || "Greška pri uploadu logotipa" });
+        } finally {
+            setLogoUploading(false);
+            setTimeout(() => setMessage(null), 5000);
+        }
+    };
+
     const handleReset = async () => {
         if (
             !confirm(
@@ -329,15 +366,19 @@ const AppearanceTab = () => {
             <ContactInfoForm form={form} handleChange={handleChange} />
             <ImagesForm
                 form={form}
-                handleChange={handleChange}
-                heroUploadMode={heroUploadMode}
+                setForm={setForm}
                 heroSelectedFile={heroSelectedFile}
                 heroPreview={heroPreview}
                 heroUploading={heroUploading}
                 heroFileInputRef={heroFileInputRef}
                 onHeroFileSelect={handleHeroFileSelect}
                 onHeroUpload={handleHeroUpload}
-                onHeroModeChange={setHeroUploadMode}
+                logoSelectedFile={logoSelectedFile}
+                logoPreview={logoPreview}
+                logoUploading={logoUploading}
+                logoFileInputRef={logoFileInputRef}
+                onLogoFileSelect={handleLogoFileSelect}
+                onLogoUpload={handleLogoUpload}
             />
             <ColorsForm form={form} handleChange={handleChange} />
             <FontsForm

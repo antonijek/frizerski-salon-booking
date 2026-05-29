@@ -144,6 +144,27 @@ const salonService = {
         }
     },
 
+    logoUpload: async (formData) => {
+        try {
+            const response = await requestInstance.post(
+                "/salons/logo-upload",
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                },
+            );
+            return response.data;
+        } catch (error) {
+            throw (
+                error.response?.data || {
+                    error: "Greška pri uploadu logotipa",
+                }
+            );
+        }
+    },
+
     /**
      * Dohvati sve korisnike (samo super admin)
      * @returns {Promise<Array>} Lista korisnika

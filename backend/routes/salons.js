@@ -57,6 +57,21 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
 });
 
+const logoStorage = multer.diskStorage({
+    destination: (req, file, cb) => { cb(null, uploadDir); },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+        const ext = path.extname(file.originalname);
+        cb(null, `logo-${uniqueSuffix}${ext}`);
+    },
+});
+
+const logoUpload = multer({
+    storage: logoStorage,
+    fileFilter,
+    limits: { fileSize: 10 * 1024 * 1024 },
+});
+
 // ============================================
 // Salons API rute (multi-tenant)
 // ============================================
@@ -267,8 +282,8 @@ router.put("/:id", authenticate, async (req, res, next) => {
             short_name || null,
             tagline || null,
             description || null,
-            logo_url || null,
-            hero_image_url || null,
+            logo_url || "",
+            hero_image_url || "",
             phone || null,
             email || null,
             address || null,
@@ -372,12 +387,50 @@ router.post(
                 }
             }
 
-            const baseUrl = `${req.protocol}://${req.get("host")}`;
             res.json({
                 success: true,
-                url: `${baseUrl}${src}`,
+                url: src,
                 message: "Hero slika uspešno uploadovana",
             });
+        } catch (err) {
+            if (err.isOperational) return next(err);
+            next(err);
+        }
+    },
+);
+
+/**
+ * POST /api/salons/logo-upload - Upload logotipa (admin)
+ */
+router.post(
+    "/logo-upload",
+    authenticate,
+    logoUpload.single("image"),
+    async (req, res, next) => {
+        try {
+            if (!req.user.isAdmin) {
+                throw new AppError("Nemaš dozvolu", 403);
+            }
+            if (!req.file) {
+                throw new AppError("Fajl nije uploadovan", 400);
+            }
+            const src = `/uploads/${req.file.filename}`;
+            if (sharp) {
+                try {
+                    const filePath = path.join(uploadDir, req.file.filename);
+                    const ext = path.extname(req.file.filename).toLowerCase();
+                    if (ext !== ".gif") {
+                        let si = sharp(filePath).resize({ width: 400, withoutEnlargement: true });
+                        if (ext === ".jpg" || ext === ".jpeg") si = si.jpeg({ quality: 80, mozjpeg: true });
+                        else if (ext === ".png") si = si.png({ quality: 80, compressionLevel: 9 });
+                        else if (ext === ".webp") si = si.webp({ quality: 80 });
+                        const opt = filePath.replace(/\.[^.]+$/, "-optimized" + ext);
+                        const info = await si.toFile(opt);
+                        try { fs.renameSync(opt, filePath); } catch (e) {}
+                    }
+                } catch (e) { console.error("Sharp err:", e); }
+            }
+            res.json({ success: true, url: src, message: "Logo uspešno uploadovan" });
         } catch (err) {
             if (err.isOperational) return next(err);
             next(err);
