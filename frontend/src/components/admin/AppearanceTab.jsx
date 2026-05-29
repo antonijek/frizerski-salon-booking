@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useAuth } from "../../context/AuthContext";
 import salonService from "../../services/salonService";
 import { applyTheme, refreshSalonData } from "../../hooks/useSalonTheme";
 import BasicInfoForm from "./appearance/BasicInfoForm";
@@ -84,7 +85,10 @@ const ActionButtons = ({ saving, onReset, onCancel }) => (
 );
 
 const AppearanceTab = () => {
+    const { isSwitchedContext, switchedSalonId } = useAuth();
     const [form, setForm] = useState({ ...DEFAULT_SALON });
+    const formRef = useRef(form);
+    formRef.current = form;
     const [salonId, setSalonId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -95,14 +99,48 @@ const AppearanceTab = () => {
     const [heroUploading, setHeroUploading] = useState(false);
     const heroFileInputRef = useRef(null);
 
+    /**
+     * Odredi koji salon treba učitati na osnovu konteksta:
+     * 1. Ako je super admin u switched contextu → koristi switchedSalonId
+     * 2. Ako je običan admin → koristi subdomain iz URL-a
+     * 3. Ako je super admin bez switched contexta → koristi subdomain iz URL-a
+     */
+    const detectTargetSalon = () => {
+        if (isSwitchedContext && switchedSalonId) {
+            return { type: "id", value: switchedSalonId };
+        }
+        // Detektuj subdomain iz hostname-a
+        const hostname = window.location.hostname;
+        // Ako je IP adresa (localhost, 127.0.0.1, ili bilo koja IP), koristi "main"
+        if (
+            hostname === "localhost" ||
+            hostname === "127.0.0.1" ||
+            /^\d+\.\d+\.\d+\.\d+$/.test(hostname)
+        ) {
+            return { type: "subdomain", value: "main" };
+        }
+        const parts = hostname.split(".");
+        if (parts.length >= 3 && parts[0] !== "www") {
+            return { type: "subdomain", value: parts[0] };
+        }
+        return { type: "subdomain", value: "main" };
+    };
+
     useEffect(() => {
         loadSalon();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const loadSalon = async () => {
         setLoading(true);
         try {
-            const data = await salonService.get("main");
+            const target = detectTargetSalon();
+            let data;
+            if (target.type === "id") {
+                data = await salonService.getById(target.value);
+            } else {
+                data = await salonService.get(target.value);
+            }
             setSalonId(data.id);
             setForm({
                 name: data.name || "",
@@ -125,6 +163,8 @@ const AppearanceTab = () => {
                 heading_font: data.heading_font || "Inter",
                 body_font: data.body_font || "Inter",
             });
+            // Primeni temu salona odmah, tako da se vide boje i fontovi trenutnog salona
+            applyTheme(data);
         } catch (err) {
             console.error("Greška pri učitavanju salona:", err);
         } finally {
@@ -137,6 +177,8 @@ const AppearanceTab = () => {
         setForm((prev) => ({ ...prev, [name]: value }));
 
         // Live-apply colors/fonts while user types
+        // Use formRef.current to avoid stale closure (form may be outdated
+        // when multiple rapid changes happen before React re-renders)
         if (
             name.startsWith("primary_") ||
             name.startsWith("text_") ||
@@ -144,7 +186,7 @@ const AppearanceTab = () => {
             name === "heading_font" ||
             name === "body_font"
         ) {
-            const preview = { ...form, [name]: value };
+            const preview = { ...formRef.current, [name]: value };
             applyTheme(preview);
         }
     };

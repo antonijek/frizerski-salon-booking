@@ -61,7 +61,7 @@ async function getStats(salonId, period, start_date, end_date) {
     stats.monthlyStats = monthlyResults;
 
     // Prihod po mesecima (u periodu)
-    const revenueSql = `SELECT DATE_FORMAT(a.date, '%Y-%m') as month, COALESCE(SUM(s.price), 0) as revenue FROM appointments a LEFT JOIN services s ON a.service = s.name ${withDateFilter("", period, start_date, end_date)} GROUP BY DATE_FORMAT(a.date, '%Y-%m') ORDER BY month`;
+    const revenueSql = `SELECT DATE_FORMAT(a.date, '%Y-%m') as month, COALESCE(SUM(s.price), 0) as revenue FROM appointments a LEFT JOIN services s ON a.service = s.name AND s.salon_id = a.salon_id ${withDateFilter("", period, start_date, end_date)} GROUP BY DATE_FORMAT(a.date, '%Y-%m') ORDER BY month`;
     const revenueResults = await query(
         revenueSql,
         getParams(period, start_date, end_date, salonId),
@@ -97,7 +97,7 @@ async function getStats(salonId, period, start_date, end_date) {
     stats.totalBarbers = barbersResults[0].total;
 
     // Ukupna zarada (u periodu)
-    const revenueTotalSql = `SELECT COALESCE(SUM(s.price), 0) as total FROM appointments a LEFT JOIN services s ON a.service = s.name ${withDateFilter("", period, start_date, end_date)}`;
+    const revenueTotalSql = `SELECT COALESCE(SUM(s.price), 0) as total FROM appointments a LEFT JOIN services s ON a.service = s.name AND s.salon_id = a.salon_id ${withDateFilter("", period, start_date, end_date)}`;
     const revenueTotalResults = await query(
         revenueTotalSql,
         getParams(period, start_date, end_date, salonId),

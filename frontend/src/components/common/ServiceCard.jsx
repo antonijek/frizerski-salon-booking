@@ -4,7 +4,7 @@
 
 const ServiceCard = ({ service }) => {
     return (
-        <div className="bg-primary-light border border-primary-light rounded-xl p-6 hover:shadow-lg hover:border-primary transition-all">
+        <div className="w-full bg-primary-light border border-primary-light rounded-xl p-6 hover:shadow-lg hover:border-primary transition-all">
             <div className="text-4xl mb-4 text-center">{service.icon}</div>
             <h3 className="text-xl font-semibold text-primary-dark mb-2">
                 {service.name}

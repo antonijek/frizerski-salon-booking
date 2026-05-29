@@ -131,9 +131,10 @@ export const applyTheme = (salon) => {
 /**
  * Hook za učitavanje teme salona
  * @param {string} subdomain - Subdomain salona (podrazumevano "main")
+ * @param {boolean} skipThemeApply - Ako je true, ne primenjuje CSS varijable (koristi se na admin panelu)
  * @returns {Object} { salon, loading, error, updateSalon }
  */
-const useSalonTheme = (subdomain = "main") => {
+const useSalonTheme = (subdomain = "main", skipThemeApply = false) => {
     const [salon, setSalon] = useState(DEFAULT_SALON);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -143,7 +144,9 @@ const useSalonTheme = (subdomain = "main") => {
         try {
             const data = await salonService.get(subdomain);
             setSalon(data);
-            applyTheme(data);
+            if (!skipThemeApply) {
+                applyTheme(data);
+            }
             setError(null);
         } catch (err) {
             console.warn(
@@ -152,12 +155,14 @@ const useSalonTheme = (subdomain = "main") => {
             );
             // Koristi podrazumevane vrednosti ako API nije dostupan
             setSalon(DEFAULT_SALON);
-            applyTheme(DEFAULT_SALON);
+            if (!skipThemeApply) {
+                applyTheme(DEFAULT_SALON);
+            }
             setError(err);
         } finally {
             setLoading(false);
         }
-    }, [subdomain]);
+    }, [subdomain, skipThemeApply]);
 
     useEffect(() => {
         fetchSalon();

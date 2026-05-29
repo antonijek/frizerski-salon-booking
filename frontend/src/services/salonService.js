@@ -26,6 +26,24 @@ const salonService = {
     },
 
     /**
+     * Dohvati salon po ID-u
+     * @param {number} id - ID salona
+     * @returns {Promise<Object>} Podaci o salonu
+     */
+    getById: async (id) => {
+        try {
+            const response = await requestInstance.get(`/salons/${id}`);
+            return response.data;
+        } catch (error) {
+            throw (
+                error.response?.data || {
+                    error: "Greška pri dohvatanju salona po ID-u",
+                }
+            );
+        }
+    },
+
+    /**
      * Dohvati sve salone (admin)
      * @returns {Promise<Array>} Lista salona
      */

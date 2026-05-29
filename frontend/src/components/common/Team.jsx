@@ -75,11 +75,11 @@ const Team = () => {
             subtitle={team.subtitle}
             background="bg-white"
         >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="flex flex-wrap justify-center gap-8">
                 {barbers.map((barber) => (
                     <div
                         key={barber.id}
-                        className="group text-center flex flex-col h-full"
+                        className="w-full sm:w-[calc(50%-16px)] lg:w-[calc(33.333%-21.33px)] group text-center flex flex-col h-full"
                     >
                         {/* Slika */}
                         <div className="relative w-48 h-48 mx-auto mb-6">

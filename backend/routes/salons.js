@@ -128,12 +128,27 @@ router.post("/", authenticate, isSuperAdmin, async (req, res, next) => {
         const sql =
             "INSERT INTO salons (subdomain, name, short_name, is_active) VALUES (?, ?, ?, TRUE)";
         const result = await query(sql, [subdomain, name, short_name || name]);
+        const newSalonId = result.insertId;
+
+        // Kloniraj template podatke iz glavnog salona (id=1)
+        const TEMPLATE_SALON_ID = 1;
+        await query(
+            "INSERT INTO services (salon_id, name, duration, price, description, icon) SELECT ?, name, duration, price, description, icon FROM services WHERE salon_id = ?",
+            [newSalonId, TEMPLATE_SALON_ID],
+        );
+        await query(
+            "INSERT INTO barbers (salon_id, name, image_url, title, bio, is_active, work_days, work_start, work_end) SELECT ?, name, image_url, title, bio, is_active, work_days, work_start, work_end FROM barbers WHERE salon_id = ?",
+            [newSalonId, TEMPLATE_SALON_ID],
+        );
+        console.log(
+            `Template kloniran: usluge i barberi kopirani u salon ID ${newSalonId}`,
+        );
 
         res.status(201).json({
             success: true,
-            message: "Salon uspešno kreiran",
+            message: "Salon uspešno kreiran sa template podacima",
             salon: {
-                id: result.insertId,
+                id: newSalonId,
                 subdomain,
                 name,
                 short_name: short_name || name,
@@ -172,6 +187,31 @@ router.delete("/:id", authenticate, isSuperAdmin, async (req, res, next) => {
         if (err.isOperational) return next(err);
         console.error("Greška pri brisanju salona:", err);
         next(new AppError("Greška pri brisanju salona", 500));
+    }
+});
+
+/**
+ * GET /api/salons/:id - Dohvati salon po ID-u (admin, switched context)
+ */
+router.get("/:id", authenticate, async (req, res, next) => {
+    try {
+        if (!req.user.isAdmin) {
+            throw new AppError("Nemaš dozvolu", 403);
+        }
+
+        const { id } = req.params;
+        const sql = "SELECT * FROM salons WHERE id = ? LIMIT 1";
+        const results = await query(sql, [id]);
+
+        if (results.length === 0) {
+            throw new AppError("Salon nije pronađen", 404);
+        }
+
+        res.json(results[0]);
+    } catch (err) {
+        if (err.isOperational) return next(err);
+        console.error("Greška pri dohvatanju salona po ID-u:", err);
+        next(new AppError("Greška pri dohvatanju salona", 500));
     }
 });
 
