@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import salonService from "../services/salonService";
 
 // ============================================
-// useSalonTheme - Hook za dinamičko učitavanje teme salona
+// useSalonTheme - Hook za dinamiÄko uÄitavanje teme salona
 // ============================================
 
 // Mapa fontova za Google Fonts URL-ove
@@ -23,8 +23,8 @@ const DEFAULT_SALON = {
     subdomain: "main",
     name: "Frizerski Salon",
     short_name: "Salon",
-    tagline: "Profesionalna nega vaše kose",
-    description: "Dobrodošli u naš salon gde vaša kosa dobija najbolju negu.",
+    tagline: "Profesionalna nega vaÅ¡e kose",
+    description: "DobrodoÅ¡li u naÅ¡ salon gde vaÅ¡a kosa dobija najbolju negu.",
     logo_url: null,
     hero_image_url: null,
     phone: "+381 61 234 567",
@@ -47,15 +47,15 @@ const DEFAULT_SALON = {
 };
 
 /**
- * Učitaj Google Font
+ * UÄitaj Google Font
  */
 const loadFont = (fontName) => {
-    if (!fontName || fontName === "Inter") return; // Inter je već u index.css
+    if (!fontName || fontName === "Inter") return; // Inter je veÄ‡ u index.css
 
     const url = FONT_URLS[fontName];
     if (!url) return;
 
-    // Proveri da li je font već učitan
+    // Proveri da li je font veÄ‡ uÄitan
     const existingLink = document.querySelector(`link[href="${url}"]`);
     if (existingLink) return;
 
@@ -69,13 +69,13 @@ const loadFont = (fontName) => {
  * Primeni CSS varijable na body
  */
 /**
- * Event name za osvežavanje podataka o salonu
+ * Event name za osveÅ¾avanje podataka o salonu
  */
 const SALON_REFRESH_EVENT = "salon:refresh";
 
 /**
- * Pozovi osvežavanje podataka o salonu (nakon admin izmene)
- * Ovo će naterati useSalonTheme hook da ponovo učita podatke
+ * Pozovi osveÅ¾avanje podataka o salonu (nakon admin izmene)
+ * Ovo Ä‡e naterati useSalonTheme hook da ponovo uÄita podatke
  */
 export const refreshSalonData = () => {
     window.dispatchEvent(new CustomEvent(SALON_REFRESH_EVENT));
@@ -121,7 +121,7 @@ export const applyTheme = (salon) => {
     root.style.setProperty("--font-heading", `"${headingFont}", sans-serif`);
     root.style.setProperty("--font-body", `"${bodyFont}", sans-serif`);
 
-    // Učitaj fontove ako nisu Inter (Inter je već u index.css)
+    // UÄitaj fontove ako nisu Inter (Inter je veÄ‡ u index.css)
     loadFont(headingFont);
     if (bodyFont !== headingFont) {
         loadFont(bodyFont);
@@ -129,7 +129,7 @@ export const applyTheme = (salon) => {
 };
 
 /**
- * Hook za učitavanje teme salona
+ * Hook za uÄitavanje teme salona
  * @param {string} subdomain - Subdomain salona (podrazumevano "main")
  * @param {boolean} skipThemeApply - Ako je true, ne primenjuje CSS varijable (koristi se na admin panelu)
  * @returns {Object} { salon, loading, error, updateSalon }
@@ -142,7 +142,7 @@ const useSalonTheme = (subdomain = "main", skipThemeApply = false) => {
     const fetchSalon = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await salonService.get(subdomain);
+            const data = salonId ? await salonService.getById(salonId) : await salonService.get(subdomain);
             setSalon(data);
             if (!skipThemeApply) {
                 applyTheme(data);
@@ -150,7 +150,7 @@ const useSalonTheme = (subdomain = "main", skipThemeApply = false) => {
             setError(null);
         } catch (err) {
             console.warn(
-                "Greška pri učitavanju salona, koristim podrazumevane vrednosti:",
+                "GreÅ¡ka pri uÄitavanju salona, koristim podrazumevane vrednosti:",
                 err,
             );
             // Koristi podrazumevane vrednosti ako API nije dostupan
@@ -162,12 +162,12 @@ const useSalonTheme = (subdomain = "main", skipThemeApply = false) => {
         } finally {
             setLoading(false);
         }
-    }, [subdomain, skipThemeApply]);
+    }, [subdomain, skipThemeApply, salonId]);
 
     useEffect(() => {
         fetchSalon();
 
-        // Slušaj događaj za osvežavanje podataka (nakon admin izmene)
+        // SluÅ¡aj dogaÄ‘aj za osveÅ¾avanje podataka (nakon admin izmene)
         const handleRefresh = () => {
             fetchSalon();
         };
@@ -179,12 +179,12 @@ const useSalonTheme = (subdomain = "main", skipThemeApply = false) => {
     }, [fetchSalon]);
 
     /**
-     * Ručno ažuriraj salon (nakon admin izmene)
+     * RuÄno aÅ¾uriraj salon (nakon admin izmene)
      */
     const updateSalon = async (salonData) => {
         const result = await salonService.update(salon.id, salonData);
         if (result.success) {
-            // Ponovo učitaj podatke
+            // Ponovo uÄitaj podatke
             await fetchSalon();
         }
         return result;
@@ -194,3 +194,4 @@ const useSalonTheme = (subdomain = "main", skipThemeApply = false) => {
 };
 
 export default useSalonTheme;
+
