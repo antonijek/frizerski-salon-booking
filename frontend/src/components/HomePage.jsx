@@ -12,7 +12,7 @@ import serviceService from "../services/serviceService";
 // ============================================
 
 const LoadingSkeleton = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="flex flex-wrap justify-center gap-6">
         {[1, 2, 3].map((i) => (
             <div
                 key={i}
@@ -154,12 +154,14 @@ const HomePage = ({ onNavigate, salon }) => {
                     {loading ? (
                         <LoadingSkeleton />
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="flex flex-wrap justify-center gap-6">
                             {services.map((service) => (
+                                <div className="w-full sm:w-1/2 lg:w-1/3 max-w-sm">
                                 <ServiceCard
                                     key={service.id}
                                     service={service}
                                 />
+                                </div>
                             ))}
                         </div>
                     )}
