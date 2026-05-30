@@ -1,12 +1,14 @@
-import { createContext, useContext, useState, useEffect } from "react";
+﻿import { createContext, useContext, useState, useEffect } from "react";
 import authService from "../services/authService";
+import salonService from "../services/salonService";
+import { applyTheme } from "../hooks/useSalonTheme";
 
 // ============================================
 // Auth Context - upravljanje autentifikacijom
 // ============================================
 
 /**
- * Dekodiraj JWT payload (samo za čitanje, ne za verifikaciju)
+ * Dekodiraj JWT payload (samo za Äitanje, ne za verifikaciju)
  */
 function decodeToken(token) {
     try {
@@ -29,7 +31,7 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (token) {
-            // Proveri da li token sadrži switched context
+            // Proveri da li token sadrÅ¾i switched context
             const decoded = decodeToken(token);
             if (decoded?.switchedSalonId) {
                 setSwitchedSalonId(decoded.switchedSalonId);
@@ -42,7 +44,7 @@ export const AuthProvider = ({ children }) => {
                     setUser(userData);
                 })
                 .catch(() => {
-                    // Token nevažeći - očisti
+                    // Token nevaÅ¾eÄ‡i - oÄisti
                     localStorage.removeItem("token");
                     setUser(null);
                     setSwitchedSalonId(null);
@@ -100,7 +102,7 @@ export const AuthProvider = ({ children }) => {
      * @param {number} salonId - ID salona
      */
     const switchToSalon = async (salonId) => {
-        const data = await authService.switchToSalon(salonId); // ovo ćemo dodati u authService
+        const data = await authService.switchToSalon(salonId); // ovo Ä‡emo dodati u authService
         localStorage.setItem("token", data.token);
         // Dekodiraj token da dobijemo switchedSalonName
         const decoded = decodeToken(data.token);
@@ -113,7 +115,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     /**
-     * Super admin se vraća iz režima konkretnog salona
+     * Super admin se vraÄ‡a iz reÅ¾ima konkretnog salona
      */
     const switchBack = async () => {
         const data = await authService.switchBack();
@@ -157,3 +159,4 @@ export const useAuth = () => {
 };
 
 export default AuthContext;
+

@@ -46,8 +46,8 @@ function AppContent() {
             case "/usluge": return <ServicesPage />;
             case "/tim": return <Team />;
             case "/kontakt": return <ContactPage />;
-            case "/zakazi": return <div><BookingForm onNavigate={handleNavigate} /></div>;
-            case "/moj-profil": return <div><MyProfile /></div>;
+            case "/zakazi": return <div className="max-w-lg mx-auto px-4 py-12"><BookingForm onNavigate={handleNavigate} /></div>;
+            case "/moj-profil": return <div className="max-w-2xl mx-auto px-4 py-12"><MyProfile /></div>;
             case "/login": return <Login onNavigate={handleNavigate} />;
             case "/register": return <Register onNavigate={handleNavigate} />;
             case "/admin": return <AdminPanel onNavigate={handleNavigate} />;
@@ -74,3 +74,4 @@ function App() {
 }
 
 export default App;
+
