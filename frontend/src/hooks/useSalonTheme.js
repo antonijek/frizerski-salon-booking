@@ -134,7 +134,7 @@ export const applyTheme = (salon) => {
  * @param {boolean} skipThemeApply - Ako je true, ne primenjuje CSS varijable (koristi se na admin panelu)
  * @returns {Object} { salon, loading, error, updateSalon }
  */
-const useSalonTheme = (subdomain = "main", skipThemeApply = false) => {
+const useSalonTheme = (subdomain = "main", skipThemeApply = false, salonId = null) => {
     const [salon, setSalon] = useState(DEFAULT_SALON);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -194,4 +194,5 @@ const useSalonTheme = (subdomain = "main", skipThemeApply = false) => {
 };
 
 export default useSalonTheme;
+
 
