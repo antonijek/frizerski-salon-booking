@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import authService from "../services/authService";
 import salonService from "../services/salonService";
 import { applyTheme } from "../hooks/useSalonTheme";
@@ -122,6 +122,12 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("token", data.token);
         setSwitchedSalonId(null);
         setSwitchedSalonName("");
+        try {
+            const mainSalon = await salonService.get("main");
+            if (mainSalon) applyTheme(mainSalon);
+        } catch (e) {
+            console.warn("Greska pri ucitavanju main salona:", e);
+        }
         return data;
     };
 
